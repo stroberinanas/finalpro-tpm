@@ -61,7 +61,9 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
   }
 
   Future<void> fetchBasecampDetail() async {
-    final url = Uri.parse('http://10.0.2.2:5000/basecamp/${widget.basecampId}');
+    final url = Uri.parse(
+      'http://172.16.81.177:5000/basecamp/${widget.basecampId}',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -230,7 +232,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
 
       body: Container(
         color: Colors.green.shade50,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +286,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 20,
-                    horizontal: 25,
+                    horizontal: 10,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,6 +326,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           label: const Text('Go to Maps'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25),

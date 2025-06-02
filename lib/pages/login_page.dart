@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     final url =
-        "http://10.0.2.2:5000/login"; // URL backend login (10.0.2.2 untuk emulator)
+        "http://172.16.81.177:5000/login"; // URL backend login (10.0.2.2 untuk emulator)
     try {
       final response = await http.post(
         Uri.parse(url),

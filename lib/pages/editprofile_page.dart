@@ -51,7 +51,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _fetchUserData() async {
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
+      final url = Uri.parse('http://172.16.81.177:5000/user/${widget.id}');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -83,7 +83,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
+      final url = Uri.parse('http://172.16.81.177:5000/user/${widget.id}');
 
       Map<String, dynamic> bodyData = {
         'name': _nameController.text.trim(),

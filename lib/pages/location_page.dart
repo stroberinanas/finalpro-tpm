@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'compass_page.dart';
+
+// Pastikan import CompassPage
+import 'compass_page.dart';
 
 class Basecamp {
   final String name;
@@ -76,8 +80,14 @@ class _LocationPageState extends State<LocationPage> {
 
   bool _loadingLocation = true;
   bool _isLoadingPosData = false;
+  String _locationError = '';
 
   final TextEditingController _searchController = TextEditingController();
+
+  static const LatLng _defaultLocation = LatLng(
+    -7.7956,
+    110.3695,
+  ); // Yogyakarta
 
   @override
   void initState() {
@@ -96,36 +106,134 @@ class _LocationPageState extends State<LocationPage> {
 
   Future<void> _getUserLocation() async {
     try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationError = 'Location services are disabled';
+          _userLocation = _defaultLocation;
+          _loadingLocation = false;
+        });
+        _showLocationDialog(
+          'Location services are disabled. Please enable location services.',
+        );
+        return;
+      }
+
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+
+      if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied ||
-            permission == LocationPermission.deniedForever) {
-          print("Permission lokasi ditolak");
-          if (!mounted) return;
-          setState(() => _loadingLocation = false);
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationError = 'Location permissions are denied';
+            _userLocation = _defaultLocation;
+            _loadingLocation = false;
+          });
+          _showLocationDialog(
+            'Location permissions are denied. Using default location.',
+          );
           return;
         }
       }
-      Position position = await Geolocator.getCurrentPosition();
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationError = 'Location permissions are permanently denied';
+          _userLocation = _defaultLocation;
+          _loadingLocation = false;
+        });
+        _showLocationDialog(
+          'Location permissions are permanently denied. Please enable in settings. Using default location.',
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
+      );
+
       if (!mounted) return;
+
       setState(() {
         _userLocation = LatLng(position.latitude, position.longitude);
         _loadingLocation = false;
+        _locationError = '';
       });
+
+      print("Location obtained: ${position.latitude}, ${position.longitude}");
     } catch (e) {
-      print("Error mendapatkan lokasi user: $e");
+      print("Error getting user location: $e");
+
       if (!mounted) return;
-      setState(() => _loadingLocation = false);
+
+      setState(() {
+        _locationError = 'Failed to get location: $e';
+        _userLocation = _defaultLocation;
+        _loadingLocation = false;
+      });
+
+      try {
+        Position? lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null && mounted) {
+          setState(() {
+            _userLocation = LatLng(
+              lastPosition.latitude,
+              lastPosition.longitude,
+            );
+            _locationError = 'Using last known location';
+          });
+          print(
+            "Using last known location: ${lastPosition.latitude}, ${lastPosition.longitude}",
+          );
+        }
+      } catch (lastPosError) {
+        print("Error getting last known position: $lastPosError");
+      }
     }
+  }
+
+  void _showLocationDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Location Notice'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _retryGetLocation();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _retryGetLocation() async {
+    setState(() {
+      _loadingLocation = true;
+      _locationError = '';
+    });
+    await _getUserLocation();
   }
 
   Future<void> _fetchPosData() async {
     if (!mounted) return;
     setState(() => _isLoadingPosData = true);
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:5000/pos'));
+      final response = await http
+          .get(Uri.parse('http://172.16.81.177:5000/pos'))
+          .timeout(const Duration(seconds: 10));
+
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         allPos = data.map((e) => Pos.fromJson(e)).toList();
@@ -138,10 +246,15 @@ class _LocationPageState extends State<LocationPage> {
 
         await _updateMarkers();
       } else {
-        throw Exception('Failed to load positions');
+        throw Exception('Failed to load positions: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetchPosData: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
+      }
     }
     if (!mounted) return;
     setState(() => _isLoadingPosData = false);
@@ -199,7 +312,12 @@ class _LocationPageState extends State<LocationPage> {
           markerId: const MarkerId('user_location'),
           position: _userLocation!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'Your Location'),
+          infoWindow: InfoWindow(
+            title:
+                _locationError.isEmpty
+                    ? 'Your Location'
+                    : 'Your Location ($_locationError)',
+          ),
         ),
       );
     }
@@ -304,7 +422,14 @@ class _LocationPageState extends State<LocationPage> {
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(color: Colors.green),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.green),
+              SizedBox(height: 16),
+              Text('Getting your location...'),
+            ],
+          ),
         ),
       );
     }
@@ -319,23 +444,38 @@ class _LocationPageState extends State<LocationPage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CompassScreen()),
+          );
+        },
+        tooltip: 'Go to Compass',
+        child: const Icon(Icons.explore),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       body: Stack(
         children: [
           GoogleMap(
             initialCameraPosition: CameraPosition(
-              target: _userLocation!,
+              target: _userLocation ?? _defaultLocation,
               zoom: 14,
             ),
             markers: markers,
             mapType: MapType.satellite,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
           ),
           Positioned(
             top: 10,
-            left: 16,
-            right: 16,
+            left: 53,
+            right: 55,
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(24),
@@ -390,6 +530,38 @@ class _LocationPageState extends State<LocationPage> {
               ),
             ),
           ),
+          if (_locationError.isNotEmpty)
+            Positioned(
+              bottom: 100,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _locationError,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _retryGetLocation,
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

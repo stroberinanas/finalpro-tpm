@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:finalpro/pages/editprofile_page.dart';
 import 'package:finalpro/pages/login_page.dart';
+import 'package:finalpro/pages/sos_page.dart'; // Import SOSPage
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -62,7 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoadingData = true);
 
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
+      final url = Uri.parse('http://172.16.81.177:5000/user/$id');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -188,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
+      final url = Uri.parse('http://172.16.81.177:5000/user/$id');
 
       final response = await http.delete(url);
 
@@ -224,7 +225,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Load wishlist ids dari SharedPreferences
   Future<Set<int>> _loadWishlistIds() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('id');
@@ -238,9 +238,8 @@ class _ProfilePageState extends State<ProfilePage> {
         .toSet();
   }
 
-  // Fetch semua basecamp lalu filter yang ada di wishlist
   Future<List<dynamic>> _fetchWishlistBasecamps(Set<int> wishlistIds) async {
-    final url = Uri.parse('http://10.0.2.2:5000/basecamp');
+    final url = Uri.parse('http://172.16.81.177:5000/basecamp');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -253,7 +252,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Fungsi lengkap load data wishlist, update state untuk tampilan
   Future<void> _loadWishlistData() async {
     if (id == null) return;
     setState(() {
@@ -267,24 +265,20 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // Widget pembungkus dengan border hijau melengkung dan shadow tipis
   Widget buildBorderedTile({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white, // Background putih
-        border: Border.all(
-          color: Colors.green.shade700,
-          width: 1,
-        ), // Border hijau gelap
-        borderRadius: BorderRadius.circular(20), // Sudut sangat melengkung
+        color: Colors.white,
+        border: Border.all(color: Colors.green.shade700, width: 1),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
-        ], // Shadow tipis agar efek mengambang
+        ],
       ),
       child: child,
     );
@@ -293,14 +287,13 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingData) {
-      // Tampilkan loading saat data user dimuat
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: Colors.green)),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F9F8), // Background abu sangat terang
+      backgroundColor: const Color(0xFFF5F9F8),
       appBar: AppBar(
         backgroundColor: Colors.green,
         title: const Text("My Profile", style: TextStyle(color: Colors.white)),
@@ -310,22 +303,19 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Column(
         children: [
-          // Profil foto, nama, email, tombol edit
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(
-                30,
-              ), // Sudut besar dan melengkung
+              borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.shade300,
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
-              ], // Shadow lembut
+              ],
             ),
             child: Row(
               children: [
@@ -401,12 +391,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
-          // Daftar menu: Wishlist, Testimonial, Delete, Logout
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Wishlist sebagai ExpansionTile
                   buildBorderedTile(
                     child: ExpansionTile(
                       leading: const Icon(
@@ -420,7 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _isWishlistExpanded = expanded;
                         });
                         if (expanded) {
-                          _loadWishlistData(); // Load wishlist saat expand
+                          _loadWishlistData();
                         }
                       },
                       children: [
@@ -468,7 +456,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // Testimonial sebagai ExpansionTile
                   buildBorderedTile(
                     child: ExpansionTile(
                       leading: const Icon(
@@ -488,7 +475,23 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // Delete Account sebagai ListTile
+                  // Menu SOS ditambahkan di sini
+                  buildBorderedTile(
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.redAccent,
+                      ),
+                      title: const Text("SOS"),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SOSPage()),
+                        );
+                      },
+                    ),
+                  ),
+
                   buildBorderedTile(
                     child: ListTile(
                       leading: const Icon(
@@ -500,7 +503,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // Logout sebagai ListTile
                   buildBorderedTile(
                     child: ListTile(
                       leading: const Icon(

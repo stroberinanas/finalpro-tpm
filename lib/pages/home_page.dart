@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
 
   // Ambil daftar basecamp dari API
   Future<void> fetchBasecampList() async {
-    final url = "http://10.0.2.2:5000/basecamp";
+    final url = "http://172.16.81.177:5000/basecamp";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -260,7 +260,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 380,
+                width: 340,
                 height: 40,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -353,11 +353,12 @@ class _HomePageState extends State<HomePage> {
                 label: const Text('Sort by Hiking Time'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 5,
                     vertical: 10,
                   ),
                 ),
