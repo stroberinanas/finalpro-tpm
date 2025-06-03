@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -62,7 +63,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
 
   Future<void> fetchBasecampDetail() async {
     final url = Uri.parse(
-      'http://172.16.81.177:5000/basecamp/${widget.basecampId}',
+      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp/${widget.basecampId}',
     );
     try {
       final response = await http.get(url);
@@ -220,6 +221,8 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
         basecampData?['elevation']?.toString() ??
         '-'; // convert to string safely
 
+    final phone = basecampData?['phone'] ?? '-';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -252,7 +255,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                         ),
                       ],
                     ),
-                    child: Image.asset(
+                    child: Image.network(
                       basecampData!['photo'],
                       width: double.infinity,
                       height: 260,
@@ -310,6 +313,25 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           color: Colors.black87,
                         ),
                       ),
+
+                      const SizedBox(height: 10),
+
+                      // Phone number display
+                      Row(
+                        children: [
+                          const Icon(Icons.phone, color: Colors.green),
+                          const SizedBox(width: 8),
+                          Text(
+                            phone,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+
                       const SizedBox(height: 12),
 
                       // Tombol buka maps dibawah deskripsi
@@ -491,7 +513,6 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     );
   }
 
-  // Widget info box kecil berisi icon, label, dan nilai
   Widget _infoBox({
     required String label,
     required String value,

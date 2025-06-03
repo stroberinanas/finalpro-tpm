@@ -44,7 +44,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       // URL endpoint backend untuk register (ganti sesuai alamat server kamu)
-      String url = "http://172.16.81.177:5000/register";
+      String url =
+          "https://finalpro-api-1013759214686.us-central1.run.app/register";
 
       // Kirim POST request dengan body JSON berisi data user
       var res = await http.post(

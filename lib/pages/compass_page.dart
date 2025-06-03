@@ -91,18 +91,15 @@ class _CompassScreenState extends State<CompassScreen> {
     final longitudeStr = _formatCoordinate(_longitude, false);
     final elevationStr =
         _elevation != null
-            ? "${_elevation!.toStringAsFixed(0)} m"
-            : "Elevation not available";
+            ? "${_elevation!.toStringAsFixed(0)} M"
+            : "Elevation Not Available";
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.green,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        title: const Text(
-          'Compass',
-          style: TextStyle(color: Colors.white, letterSpacing: 2),
-        ),
+        title: const Text('Compass', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -121,7 +118,7 @@ class _CompassScreenState extends State<CompassScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: Colors.green,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -129,10 +126,10 @@ class _CompassScreenState extends State<CompassScreen> {
                     Text(
                       directionLabel,
                       style: const TextStyle(
-                        color: Colors.green,
+                        color: Colors.black,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
+                        letterSpacing: 2,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -171,18 +168,11 @@ class _CompassScreenState extends State<CompassScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            fontSize: 14,
-            letterSpacing: 1,
-          ),
-        ),
+        Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
         Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -202,34 +192,12 @@ class _ModernCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width / 2, size.height / 2);
 
-    // Outer glow effect
-    final glowPaint =
-        Paint()
-          ..shader = RadialGradient(
-            colors: [Colors.blue.withOpacity(0.2), Colors.transparent],
-            stops: [0.7, 1],
-          ).createShader(Rect.fromCircle(center: center, radius: radius))
-          ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius, glowPaint);
-
     // Main compass circle
     final circlePaint =
         Paint()
-          ..color = Colors.grey[850]!
+          ..color = Colors.black
           ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius - 10, circlePaint);
-
-    // Inner gradient circle
-    final innerGradient = RadialGradient(
-      colors: [Colors.grey[900]!, Colors.grey[800]!],
-    );
-    final innerPaint =
-        Paint()
-          ..shader = innerGradient.createShader(
-            Rect.fromCircle(center: center, radius: radius - 30),
-          )
-          ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius - 30, innerPaint);
 
     // Ticks
     canvas.save();
@@ -243,7 +211,7 @@ class _ModernCompassPainter extends CustomPainter {
     final tickPaintMain =
         Paint()
           ..color = Colors.green
-          ..strokeWidth = 3;
+          ..strokeWidth = 1.5;
 
     for (int i = 0; i < 360; i += 6) {
       final isMainTick = (i % 30 == 0);
@@ -290,7 +258,7 @@ class _ModernCompassPainter extends CustomPainter {
     final angles = [0, 90, 180, 270];
     final directionTextStyle = TextStyle(
       color: Colors.green,
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: FontWeight.bold,
     );
 
@@ -334,17 +302,6 @@ class _ModernCompassPainter extends CustomPainter {
     needlePath.lineTo(center.dx + 8, center.dy);
     needlePath.close();
     canvas.drawPath(needlePath, needlePaint);
-
-    // Center circle
-    final centerCirclePaint =
-        Paint()
-          ..shader = RadialGradient(
-            colors: [Colors.green, Colors.blue[900]!],
-          ).createShader(Rect.fromCircle(center: center, radius: 12));
-    canvas.drawCircle(center, 12, centerCirclePaint);
-
-    // Center dot
-    canvas.drawCircle(center, 4, Paint()..color = Colors.white);
   }
 
   @override

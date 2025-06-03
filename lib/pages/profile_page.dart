@@ -63,7 +63,9 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoadingData = true);
 
     try {
-      final url = Uri.parse('http://172.16.81.177:5000/user/$id');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
+      );
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -189,7 +191,9 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final url = Uri.parse('http://172.16.81.177:5000/user/$id');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
+      );
 
       final response = await http.delete(url);
 
@@ -239,7 +243,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<List<dynamic>> _fetchWishlistBasecamps(Set<int> wishlistIds) async {
-    final url = Uri.parse('http://172.16.81.177:5000/basecamp');
+    final url = Uri.parse(
+      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp',
+    );
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -486,7 +492,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const SOSPage()),
+                          MaterialPageRoute(builder: (_) => SOSPage()),
                         );
                       },
                     ),

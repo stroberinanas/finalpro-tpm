@@ -7,9 +7,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'compass_page.dart';
 
-// Pastikan import CompassPage
-import 'compass_page.dart';
-
 class Basecamp {
   final String name;
 
@@ -231,7 +228,11 @@ class _LocationPageState extends State<LocationPage> {
     setState(() => _isLoadingPosData = true);
     try {
       final response = await http
-          .get(Uri.parse('http://172.16.81.177:5000/pos'))
+          .get(
+            Uri.parse(
+              'https://finalpro-api-1013759214686.us-central1.run.app/pos',
+            ),
+          )
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {

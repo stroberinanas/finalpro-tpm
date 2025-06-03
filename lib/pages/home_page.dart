@@ -77,7 +77,8 @@ class _HomePageState extends State<HomePage> {
 
   // Ambil daftar basecamp dari API
   Future<void> fetchBasecampList() async {
-    final url = "http://172.16.81.177:5000/basecamp";
+    final url =
+        "https://finalpro-api-1013759214686.us-central1.run.app/basecamp";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -273,10 +274,7 @@ class _HomePageState extends State<HomePage> {
                       _searchText = value; // update teks pencarian
                     });
                   },
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color.fromARGB(255, 91, 90, 90),
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
                   decoration: const InputDecoration(
                     isCollapsed: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
