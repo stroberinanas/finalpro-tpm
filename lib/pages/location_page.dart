@@ -228,7 +228,11 @@ class _LocationPageState extends State<LocationPage> {
     setState(() => _isLoadingPosData = true);
     try {
       final response = await http
-          .get(Uri.parse('http://10.0.2.2:5000/pos'))
+          .get(
+            Uri.parse(
+              'https://finalpro-api-1013759214686.us-central1.run.app/pos',
+            ),
+          )
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {

@@ -64,7 +64,9 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoadingData = true);
 
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
+      );
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -75,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _isLoadingData = false;
             if (_userData?['photo'] != null) {
               _updatedPhotoUrl =
-                  'http://10.0.2.2:5000${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
+                  'https://finalpro-api-1013759214686.us-central1.run.app${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
             } else {
               _updatedPhotoUrl = null;
             }
@@ -125,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final photo = _userData!['photo'];
       if (photo != null && photo is String && photo.isNotEmpty) {
         return NetworkImage(
-          'http://10.0.2.2:5000${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
+          'https://finalpro-api-1013759214686.us-central1.run.app${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
         );
       }
 
@@ -193,7 +195,9 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
+      );
 
       final response = await http.delete(url);
 
@@ -243,7 +247,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<List<dynamic>> _fetchWishlistBasecamps(Set<int> wishlistIds) async {
-    final url = Uri.parse('http://10.0.2.2:5000/basecamp');
+    final url = Uri.parse(
+      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp',
+    );
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

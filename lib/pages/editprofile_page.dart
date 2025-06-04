@@ -59,7 +59,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // Fetch data user berdasarkan ID
   Future<void> _fetchUserData() async {
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}',
+      );
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -99,7 +101,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _uploadImage(int userId) async {
     if (_imageFile == null) return;
 
-    final url = Uri.parse('http://10.0.2.2:5000/user/$userId/upload-photo');
+    final url = Uri.parse(
+      'https://finalpro-api-1013759214686.us-central1.run.app/user/$userId/upload-photo',
+    );
 
     var request = http.MultipartRequest('POST', url);
     request.files.add(
@@ -111,7 +115,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       // Jika berhasil, buat timestamp untuk menghindari cache
       setState(() {
         _uploadedImageUrl =
-            'http://10.0.2.2:5000${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
+            'https://finalpro-api-1013759214686.us-central1.run.app${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
         _imageFile =
             null; // reset file lokal, supaya pakai network image terbaru
       });
@@ -128,7 +132,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
+      final url = Uri.parse(
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}',
+      );
 
       Map<String, dynamic> bodyData = {
         'name': _nameController.text.trim(),
@@ -233,7 +239,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     // Cek apakah ada foto dari backend user
     if (userData != null && userData!['photo'] != null) {
       return NetworkImage(
-        'http://10.0.2.2:5000${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
+        'https://finalpro-api-1013759214686.us-central1.run.app${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
       ); // Ambil gambar dari backend
     }
 

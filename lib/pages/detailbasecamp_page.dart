@@ -62,7 +62,9 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
   }
 
   Future<void> fetchBasecampDetail() async {
-    final url = Uri.parse('http://10.0.2.2:5000/basecamp/${widget.basecampId}');
+    final url = Uri.parse(
+      'https://finalpro-api-1013759214686.us-central1.run.app/${widget.basecampId}',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

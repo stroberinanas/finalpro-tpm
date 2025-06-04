@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     final url =
-        "http://10.0.2.2:5000/login"; // URL backend login (10.0.2.2 untuk emulator)
+        "https://finalpro-api-1013759214686.us-central1.run.app/login"; // URL backend login (10.0.2.2 untuk emulator)
     try {
       final response = await http.post(
         Uri.parse(url),
