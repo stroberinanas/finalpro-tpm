@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   final int id;
@@ -13,11 +15,13 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   Map<String, dynamic>? userData;
+  File? _imageFile; // File gambar profil baru yang dipilih user
+  final ImagePicker _picker = ImagePicker(); // Objek untuk mengambil gambar
+  String? _uploadedImageUrl;
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
-  late TextEditingController _photoController;
 
   bool _isLoading = false;
   String? _error;
@@ -30,14 +34,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    _photoController = TextEditingController();
 
     _fetchUserData();
-
-    // Update preview saat isi photoController berubah
-    _photoController.addListener(() {
-      setState(() {}); // Refresh UI supaya avatar berubah
-    });
   }
 
   @override
@@ -45,39 +43,84 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _photoController.dispose();
     super.dispose();
   }
 
+  // Method untuk memilih gambar dari galeri
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Fetch data user berdasarkan ID
   Future<void> _fetchUserData() async {
     try {
-      final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}',
-      );
+      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['user'] != null) {
-          userData = data['user'];
-          _nameController.text = userData!['name'] ?? '';
-          _emailController.text = userData!['email'] ?? '';
-          _photoController.text = userData!['photo'] ?? '';
+          if (mounted) {
+            setState(() {
+              userData = data['user'];
+              _nameController.text = userData!['name'] ?? '';
+              _emailController.text = userData!['email'] ?? '';
+            });
+          }
         } else {
-          _error = 'User data not found';
+          if (mounted) {
+            setState(() {
+              _error = 'User data not found';
+            });
+          }
         }
       } else {
-        _error = 'Server error: ${response.statusCode}';
+        if (mounted) {
+          setState(() {
+            _error = 'Server error: ${response.statusCode}';
+          });
+        }
       }
     } catch (e) {
-      _error = 'Failed to fetch user data: $e';
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to fetch user data: $e';
+        });
+      }
     }
-
-    setState(() {
-      _isFetching = false;
-    });
   }
 
+  // Method untuk mengunggah gambar ke server
+  Future<void> _uploadImage(int userId) async {
+    if (_imageFile == null) return;
+
+    final url = Uri.parse('http://10.0.2.2:5000/user/$userId/upload-photo');
+
+    var request = http.MultipartRequest('POST', url);
+    request.files.add(
+      await http.MultipartFile.fromPath('photo', _imageFile!.path),
+    );
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      // Jika berhasil, buat timestamp untuk menghindari cache
+      setState(() {
+        _uploadedImageUrl =
+            'http://10.0.2.2:5000${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
+        _imageFile =
+            null; // reset file lokal, supaya pakai network image terbaru
+      });
+    } else {
+      throw Exception('Failed to upload image');
+    }
+  }
+
+  // Method untuk menyimpan data profil
   Future<void> _saveProfile() async {
     setState(() {
       _isLoading = true;
@@ -85,14 +128,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app//user/${widget.id}',
-      );
+      final url = Uri.parse('http://10.0.2.2:5000/user/${widget.id}');
 
       Map<String, dynamic> bodyData = {
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
-        'photo': _photoController.text.trim(),
       };
 
       if (_passwordController.text.trim().isNotEmpty) {
@@ -106,62 +146,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['message'] != null) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(data['message'])));
-          }
-          Navigator.pop(context, true);
-        } else {
+        if (_imageFile != null) {
+          await _uploadImage(widget.id);
+        }
+        if (mounted) {
           setState(() {
-            _error = 'Update failed';
+            _isLoading = false;
+          });
+          Navigator.pop(context, true); // Kembali dengan hasil berhasil
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _error = 'Server error: ${response.statusCode}';
             _isLoading = false;
           });
         }
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = 'Server error: ${response.statusCode}';
+          _error = 'Connection failed: $e';
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = 'Connection failed: $e';
-        _isLoading = false;
-      });
     }
   }
 
-  // Fungsi untuk mengambil gambar avatar berdasarkan input foto user,
-  // fallback ke ui-avatars kalau kosong, atau asset default kalau nama juga kosong
-  ImageProvider<Object> _getProfileImage() {
-    final inputPhoto = _photoController.text.trim();
-
-    if (inputPhoto.isNotEmpty) {
-      // Cek apakah inputPhoto seperti URL (simple check)
-      if (inputPhoto.startsWith('http') || inputPhoto.startsWith('https')) {
-        return NetworkImage(inputPhoto);
-      } else {
-        // Bisa juga diubah ke AssetImage kalau input berupa path asset lokal
-        return AssetImage(inputPhoto);
-      }
-    }
-
-    // Kalau kosong, fallback ke avatar dari nama user
-    final name = _nameController.text.trim();
-    if (name.isNotEmpty) {
-      final encodedName = Uri.encodeComponent(name);
-      return NetworkImage(
-        'https://ui-avatars.com/api/?name=$encodedName&background=0D8ABC&color=fff',
-      );
-    }
-
-    // Default asset
-    return const AssetImage('assets/images/profile.jpg');
-  }
-
+  // Method untuk membangun text field
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -204,27 +216,46 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
+  // Method untuk mendapatkan gambar profil
+  ImageProvider<Object> _getProfileImage() {
+    // Cek apakah file gambar sudah dipilih
+    if (_imageFile != null) {
+      return FileImage(_imageFile!); // Jika ada file gambar yang dipilih
+    }
+
+    // Cek apakah URL gambar sudah ada
+    if (_uploadedImageUrl != null) {
+      return NetworkImage(
+        _uploadedImageUrl!,
+      ); // Jika ada gambar yang sudah diunggah
+    }
+
+    // Cek apakah ada foto dari backend user
+    if (userData != null && userData!['photo'] != null) {
+      return NetworkImage(
+        'http://10.0.2.2:5000${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
+      ); // Ambil gambar dari backend
+    }
+
+    // Fallback ke gambar profil default
+    return const AssetImage(
+      'assets/images/profile.jpg',
+    ); // Gambar profil default
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isFetching) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.green.shade700,
-          title: const Text('Edit Profile'),
-          centerTitle: true,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.green),
-        ),
-      );
-    }
+    if (_isFetching) {}
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F8),
       appBar: AppBar(
         backgroundColor: Colors.green.shade700,
         centerTitle: true,
-        title: const Text('Edit Profile'),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(color: Colors.white),
+        ),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -253,14 +284,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Preview avatar profil berdasarkan input text foto
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.green.shade700, width: 3),
-              ),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _getProfileImage(),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.green.shade700, width: 3),
+                ),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage:
+                      _getProfileImage(), // Ambil gambar dari method
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -273,15 +308,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               label: 'Email',
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-            ),
-
-            const SizedBox(height: 20),
-
-            // TextField untuk foto
-            _buildTextField(
-              label: 'Photo (URL or Asset)',
-              controller: _photoController,
-              keyboardType: TextInputType.text,
             ),
 
             const SizedBox(height: 20),

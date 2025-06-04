@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:finalpro/pages/editprofile_page.dart';
 import 'package:finalpro/pages/login_page.dart';
 import 'package:finalpro/pages/sos_page.dart'; // Import SOSPage
@@ -22,6 +21,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? _userData;
   bool _isLoadingData = false;
   bool _isDetailExpanded = false;
+  String? _updatedPhotoUrl;
+  String? _error; // Deklarasi untuk _error
 
   // State untuk wishlist
   bool _isWishlistExpanded = false;
@@ -63,9 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoadingData = true);
 
     try {
-      final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
-      );
+      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -74,32 +73,33 @@ class _ProfilePageState extends State<ProfilePage> {
           setState(() {
             _userData = data['user'];
             _isLoadingData = false;
+            if (_userData?['photo'] != null) {
+              _updatedPhotoUrl =
+                  'http://10.0.2.2:5000${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
+            } else {
+              _updatedPhotoUrl = null;
+            }
           });
         } else {
-          setState(() => _isLoadingData = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(data['message'] ?? 'Failed to fetch user data'),
-              ),
-            );
-          }
+          setState(() {
+            _error = data['message'] ?? 'Failed to load user data';
+            _isLoadingData = false;
+            _updatedPhotoUrl = null;
+          });
         }
       } else {
-        setState(() => _isLoadingData = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Server error: ${response.statusCode}')),
-          );
-        }
+        setState(() {
+          _error = 'Server error: ${response.statusCode}';
+          _isLoadingData = false;
+          _updatedPhotoUrl = null;
+        });
       }
     } catch (e) {
-      setState(() => _isLoadingData = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Connection error: $e')));
-      }
+      setState(() {
+        _error = 'Connection failed: $e';
+        _isLoadingData = false;
+        _updatedPhotoUrl = null;
+      });
     }
   }
 
@@ -124,7 +124,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_userData != null) {
       final photo = _userData!['photo'];
       if (photo != null && photo is String && photo.isNotEmpty) {
-        return NetworkImage(photo);
+        return NetworkImage(
+          'http://10.0.2.2:5000${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
+        );
       }
 
       final name = _userData!['name'];
@@ -191,9 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
-      );
+      final url = Uri.parse('http://10.0.2.2:5000/user/$id');
 
       final response = await http.delete(url);
 
@@ -243,9 +243,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<List<dynamic>> _fetchWishlistBasecamps(Set<int> wishlistIds) async {
-    final url = Uri.parse(
-      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp',
-    );
+    final url = Uri.parse('http://10.0.2.2:5000/basecamp');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

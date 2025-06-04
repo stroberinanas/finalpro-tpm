@@ -77,8 +77,7 @@ class _HomePageState extends State<HomePage> {
 
   // Ambil daftar basecamp dari API
   Future<void> fetchBasecampList() async {
-    final url =
-        "https://finalpro-api-1013759214686.us-central1.run.app/basecamp";
+    final url = "http://10.0.2.2:5000/basecamp";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
