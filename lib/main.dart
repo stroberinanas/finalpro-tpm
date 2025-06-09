@@ -1,9 +1,12 @@
+import 'package:finalpro/notification_service.dart';
 import 'package:finalpro/pages/home_page.dart';
 import 'package:finalpro/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(const MyApp());
 }
 

@@ -1,10 +1,60 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:torch_light/torch_light.dart';
 
-class SOSPage extends StatelessWidget {
-  SOSPage({super.key});
+class SOSPage extends StatefulWidget {
+  const SOSPage({super.key});
 
-  // Stream warna kedip: merah - putih berulang tiap 200 ms, total 20 kali
+  @override
+  State<SOSPage> createState() => _SOSPageState();
+}
+
+class _SOSPageState extends State<SOSPage> {
+  late Stream<Color> _colorStream;
+  bool _isFlashing = false;
+  bool stillFlashing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    stillFlashing = true;
+    _startFlashlight();
+    _colorStream = const Stream.empty(); // Initial empty stream
+  }
+
+  @override
+  void dispose() {
+    print("abc");
+    stillFlashing = false;
+    _stopFlashlight();
+    super.dispose();
+  }
+
+  // Flashlight control
+  Future<void> _startFlashlight() async {
+    try {
+      if (!stillFlashing) return;
+      await TorchLight.enableTorch();
+
+      await Future.delayed(Durations.medium1);
+
+      await TorchLight.disableTorch();
+
+      await Future.delayed(Durations.medium1);
+
+      _startFlashlight();
+    } catch (e) {
+      print("Error enabling flashlight: $e");
+    }
+  }
+
+  Future<void> _stopFlashlight() async {
+    try {
+      await TorchLight.disableTorch();
+    } catch (e) {
+      print("Error disabling flashlight: $e");
+    }
+  }
+
   Stream<Color> _flashColorStream() async* {
     final maxFlash = 20;
     int count = 0;
@@ -16,21 +66,30 @@ class SOSPage extends StatelessWidget {
       await Future.delayed(const Duration(milliseconds: 200));
       count++;
     }
-    yield Colors.white; // reset warna akhir
+    yield Colors.white;
+    setState(() {
+      _isFlashing = false;
+    });
+  }
+
+  void _startFlashing() {
+    setState(() {
+      _isFlashing = true;
+      _colorStream = _flashColorStream();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SOS'),
+        title: const Text('SOS', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: Colors.redAccent,
-        foregroundColor: Colors.white,
       ),
       body: Center(
         child: StreamBuilder<Color>(
-          stream: _flashColorStream(),
+          stream: _colorStream,
           initialData: Colors.white,
           builder: (context, snapshot) {
             final color = snapshot.data ?? Colors.white;
@@ -77,22 +136,14 @@ class SOSPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        onPressed:
-                            snapshot.connectionState == ConnectionState.active
-                                ? null
-                                : () {
-                                  // Trigger rebuild with a new stream by using setState in parent widget
-                                  // Or use a StatefulWidget wrapping this StatelessWidget to restart stream
-                                },
+                        onPressed: _isFlashing ? null : _startFlashing,
                         icon: const Icon(
                           Icons.warning_amber_rounded,
                           size: 28,
                           color: Colors.white,
                         ),
                         label: Text(
-                          snapshot.connectionState == ConnectionState.active
-                              ? 'Flashing...'
-                              : 'SOS Signal',
+                          _isFlashing ? 'Flashing...' : 'SOS Signal',
                           style: const TextStyle(
                             fontSize: 20,
                             color: Colors.white,

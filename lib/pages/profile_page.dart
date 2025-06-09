@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:finalpro/pages/editprofile_page.dart';
 import 'package:finalpro/pages/login_page.dart';
-import 'package:finalpro/pages/sos_page.dart'; // Import SOSPage
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -142,12 +141,14 @@ class _ProfilePageState extends State<ProfilePage> {
     return const AssetImage('assets/images/profile.jpg');
   }
 
+  // Fungsi logout dengan notifikasi
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('id');
     await prefs.remove('email');
     await prefs.remove('name');
 
+    // Arahkan ke halaman login setelah logout
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -304,107 +305,109 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F8),
-      appBar: AppBar(
-        backgroundColor: Colors.green,
-        title: const Text("My Profile", style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
       body: Column(
         children: [
+          // Header dengan gradient dan avatar besar
           Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 0, bottom: 0),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF43EA7A), Color(0xFF1B8D3B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(36),
+                bottomRight: Radius.circular(36),
+              ),
             ),
-            child: Row(
-              children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: _getProfileImage(),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade700,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const SizedBox(height: 18),
+                  Stack(
                     children: [
-                      Text(
-                        _userData?['name'] ?? widget.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                          color: Color.fromARGB(255, 34, 34, 34),
+                      CircleAvatar(
+                        radius: 54,
+                        backgroundColor: Colors.white,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: _getProfileImage(),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _userData?['email'] ?? widget.email,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 36,
-                        child: ElevatedButton(
-                          onPressed: _openEditProfile,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: GestureDetector(
+                          onTap: _openEditProfile,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade700,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
                             ),
-                          ),
-                          child: const Text(
-                            'Edit Profile',
-                            style: TextStyle(fontSize: 14, color: Colors.white),
+                            child: const Padding(
+                              padding: EdgeInsets.all(7),
+                              child: Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  Text(
+                    _userData?['name'] ?? widget.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _userData?['email'] ?? widget.email,
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 38,
+                    child: ElevatedButton.icon(
+                      onPressed: _openEditProfile,
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Edit Profile',
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
+              ),
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  const SizedBox(height: 18),
                   buildBorderedTile(
                     child: ExpansionTile(
                       leading: const Icon(
@@ -434,74 +437,60 @@ class _ProfilePageState extends State<ProfilePage> {
                           )
                         else
                           ..._wishlistBasecamps.map(
-                            (basecamp) => ListTile(
-                              leading:
-                                  (basecamp['photo'] != null &&
-                                          basecamp['photo'].isNotEmpty)
-                                      ? Image.asset(
-                                        basecamp['photo'],
-                                        width: 60,
-                                        height: 60,
-                                        fit: BoxFit.cover,
-                                      )
-                                      : Container(
-                                        width: 60,
-                                        height: 60,
-                                        color: Colors.grey.shade300,
-                                        child: const Icon(
-                                          Icons.image_not_supported,
-                                        ),
-                                      ),
-                              title: Text(
-                                basecamp['name'] ?? 'Nama tidak tersedia',
+                            (basecamp) => Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                              subtitle: Text(
-                                basecamp['hiking_time'] != null
-                                    ? 'Hiking Time : ${basecamp['hiking_time']} Hours'
-                                    : 'Hiking Time Not Available',
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: ListTile(
+                                leading:
+                                    (basecamp['photo'] != null &&
+                                            basecamp['photo'].isNotEmpty)
+                                        ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          child: Image.asset(
+                                            basecamp['photo'],
+                                            width: 54,
+                                            height: 54,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                        : Container(
+                                          width: 54,
+                                          height: 54,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade300,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.image_not_supported,
+                                          ),
+                                        ),
+                                title: Text(
+                                  basecamp['name'] ?? 'Nama tidak tersedia',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  basecamp['hiking_time'] != null
+                                      ? 'Hiking Time : ${basecamp['hiking_time']} Hours'
+                                      : 'Hiking Time Not Available',
+                                ),
                               ),
                             ),
                           ),
                       ],
                     ),
                   ),
-
-                  buildBorderedTile(
-                    child: ExpansionTile(
-                      leading: const Icon(
-                        Icons.library_books_outlined,
-                        color: Colors.green,
-                      ),
-                      title: const Text("Testimonial"),
-                      initiallyExpanded: _isDetailExpanded,
-                      onExpansionChanged: (expanded) {
-                        setState(() {
-                          _isDetailExpanded = expanded;
-                        });
-                      },
-                      children: const [
-                        ListTile(title: Text("keren mantap luar biasa")),
-                      ],
-                    ),
-                  ),
-
-                  // Menu SOS ditambahkan di sini
-                  buildBorderedTile(
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.redAccent,
-                      ),
-                      title: const Text("SOS"),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => SOSPage()),
-                        );
-                      },
-                    ),
-                  ),
-
                   buildBorderedTile(
                     child: ListTile(
                       leading: const Icon(
@@ -512,7 +501,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: () => _deleteAccount(context),
                     ),
                   ),
-
                   buildBorderedTile(
                     child: ListTile(
                       leading: const Icon(
@@ -523,6 +511,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: () => _logout(context),
                     ),
                   ),
+                  const SizedBox(height: 18),
                 ],
               ),
             ),

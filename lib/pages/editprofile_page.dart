@@ -256,7 +256,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F8),
       appBar: AppBar(
-        backgroundColor: Colors.green.shade700,
+        backgroundColor: Colors.green,
         centerTitle: true,
         title: const Text(
           'Edit Profile',
@@ -285,60 +285,140 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Preview avatar profil berdasarkan input text foto
-            GestureDetector(
-              onTap: _pickImage,
+            // Header dengan gradient dan avatar besar
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 0, bottom: 0),
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(36),
+                  bottomRight: Radius.circular(36),
+                ),
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 18),
+                    Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 54,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundImage: _getProfileImage(),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade700,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(7),
+                                child: Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.green.shade700, width: 3),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade200,
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage:
-                      _getProfileImage(), // Ambil gambar dari method
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildTextField(
+                      label: 'Name',
+                      controller: _nameController,
+                      suffixIcon: const Icon(Icons.person, color: Colors.green),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      label: 'Email',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      suffixIcon: const Icon(Icons.email, color: Colors.green),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      label: 'New Password (leave blank to keep current)',
+                      controller: _passwordController,
+                      obscureText: !_passwordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.green.shade700,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (_error != null)
+                      Card(
+                        color: Colors.red.shade50,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            _buildTextField(label: 'Name', controller: _nameController),
-
-            const SizedBox(height: 20),
-
-            _buildTextField(
-              label: 'Email',
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-            ),
-
-            const SizedBox(height: 20),
-
-            _buildTextField(
-              label: 'New Password (leave blank to keep current)',
-              controller: _passwordController,
-              obscureText: !_passwordVisible,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _passwordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.green.shade700,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _passwordVisible = !_passwordVisible;
-                  });
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            if (_error != null)
-              Text(_error!, style: const TextStyle(color: Colors.red)),
           ],
         ),
       ),

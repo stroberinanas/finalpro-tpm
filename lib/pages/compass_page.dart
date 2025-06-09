@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:location/location.dart';
 
-class CompassScreen extends StatefulWidget {
-  const CompassScreen({super.key});
+class CompassPage extends StatefulWidget {
+  const CompassPage({super.key});
 
   @override
-  State<CompassScreen> createState() => _CompassScreenState();
+  State<CompassPage> createState() => _CompassPageState();
 }
 
-class _CompassScreenState extends State<CompassScreen> {
+class _CompassPageState extends State<CompassPage> {
   double? _heading;
   StreamSubscription? _compassSubscription;
 
@@ -97,78 +97,144 @@ class _CompassScreenState extends State<CompassScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.green,
-        iconTheme: const IconThemeData(color: Colors.white),
+
         elevation: 0,
-        title: const Text('Compass', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Compass Page',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomPaint(
-                size: const Size(300, 300),
-                painter: _ModernCompassPainter(heading),
-              ),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Header ilustrasi kompas
+                Padding(
+                  padding: const EdgeInsets.only(top: 18, bottom: 10),
+                  child: Column(children: [const SizedBox(height: 8)]),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(20),
+                // Kompas dengan shadow
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(180),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.13),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: CustomPaint(
+                    size: const Size(300, 300),
+                    painter: _ModernCompassPainter(heading),
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      directionLabel,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                const SizedBox(height: 36),
+                // Arah dan derajat
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.18),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        directionLabel,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${heading.toStringAsFixed(1)}°",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Info koordinat dan elevasi dalam card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Card(
+                    color: Colors.green.shade50,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 16,
+                      ),
+                      child: Column(
+                        children: [
+                          _buildInfoRowWithIcon(
+                            Icons.my_location,
+                            "LATITUDE",
+                            latitudeStr,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildInfoRowWithIcon(
+                            Icons.explore,
+                            "LONGITUDE",
+                            longitudeStr,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildInfoRowWithIcon(
+                            Icons.terrain,
+                            "ELEVATION",
+                            elevationStr,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${heading.toStringAsFixed(1)}°",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: [
-                    _buildInfoRow("LATITUDE", latitudeStr),
-                    const SizedBox(height: 8),
-                    _buildInfoRow("LONGITUDE", longitudeStr),
-                    const SizedBox(height: 8),
-                    _buildInfoRow("ELEVATION", elevationStr),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRowWithIcon(IconData icon, String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: Colors.black, fontSize: 16)),
+        Icon(icon, color: Colors.green, size: 22),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
         Text(
           value,
           style: const TextStyle(

@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'compass_page.dart';
 
 class Basecamp {
   final String name;
@@ -325,7 +323,6 @@ class _LocationPageState extends State<LocationPage> {
 
     int colorIndex = 0;
     for (var entry in basecampPosMap.entries) {
-      int basecampId = entry.key;
       List<Pos> posList = entry.value;
 
       posList = posList.where((pos) => filteredPos.contains(pos)).toList();
@@ -445,19 +442,7 @@ class _LocationPageState extends State<LocationPage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CompassScreen()),
-          );
-        },
-        tooltip: 'Go to Compass',
-        child: const Icon(Icons.explore),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+
       body: Stack(
         children: [
           GoogleMap(

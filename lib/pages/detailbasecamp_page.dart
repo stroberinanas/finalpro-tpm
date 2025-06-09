@@ -63,7 +63,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
 
   Future<void> fetchBasecampDetail() async {
     final url = Uri.parse(
-      'https://finalpro-api-1013759214686.us-central1.run.app/${widget.basecampId}',
+      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp/${widget.basecampId}',
     );
     try {
       final response = await http.get(url);
@@ -197,7 +197,10 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Detail Basecamp'),
+          title: const Text(
+            'Detail Basecamp',
+            style: TextStyle(color: Colors.white),
+          ),
           centerTitle: true,
           backgroundColor: Colors.green,
         ),
@@ -235,41 +238,69 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
 
       body: Container(
         color: Colors.green.shade50,
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Foto dengan border radius dan shadow
+              // Gambar utama dengan shadow, rounded, dan overlay judul
               if (basecampData?['photo'] != null &&
                   (basecampData!['photo'] as String).isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
+                Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.18),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.asset(
+                          basecampData!['photo'],
+                          width: double.infinity,
+                          height: 220,
+                          fit: BoxFit.cover,
                         ),
-                      ],
+                      ),
                     ),
-                    child: Image.asset(
-                      basecampData!['photo'],
-                      width: double.infinity,
-                      height: 260,
-                      fit: BoxFit.cover,
+                    Positioned(
+                      left: 20,
+                      bottom: 18,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          basecampData?['name'] ?? '-',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 )
               else
                 Container(
                   width: double.infinity,
-                  height: 260,
+                  height: 220,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(22),
                   ),
                   child: const Icon(
                     Icons.image_not_supported,
@@ -277,34 +308,23 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                     color: Colors.grey,
                   ),
                 ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Card untuk info utama
+              // Card info utama
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
-                elevation: 5,
+                elevation: 4,
                 color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 20,
-                    horizontal: 10,
+                    vertical: 22,
+                    horizontal: 18,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nama basecamp
-                      Text(
-                        basecampData?['name'] ?? '-',
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
                       // Description
                       Text(
                         basecampData?['description'] ?? '-',
@@ -313,9 +333,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           color: Colors.black87,
                         ),
                       ),
-
-                      const SizedBox(height: 10),
-
+                      const SizedBox(height: 14),
                       // Phone number display
                       Row(
                         children: [
@@ -331,10 +349,8 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 12),
-
-                      // Tombol buka maps dibawah deskripsi
+                      const SizedBox(height: 14),
+                      // Tombol buka maps
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -356,26 +372,27 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // Waktu hiking & elevasi dalam 2 kolom rapi
+                      const SizedBox(height: 18),
+                      // Info hiking time & elevation dalam chip badge
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _infoBox(
-                            label: 'Elevation',
-                            value: '$elevationStr m',
+                          _infoChip(
                             icon: Icons.height,
+                            label: '$elevationStr m',
+                            color: Colors.orange.shade100,
+                            iconColor: Colors.deepOrangeAccent,
                           ),
-                          _infoBox(
-                            label: 'Hiking Time',
-                            value: '$hikingTimeRaw hours',
+                          const SizedBox(width: 16),
+                          _infoChip(
                             icon: Icons.access_time,
+                            label: '$hikingTimeRaw hours',
+                            color: Colors.blue.shade100,
+                            iconColor: Colors.blue,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-
+                      const SizedBox(height: 18),
                       // Row waktu buka (Start to Hiking) dengan dropdown timezone
                       Row(
                         children: [
@@ -419,7 +436,6 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           ),
                         ],
                       ),
-
                       Row(
                         children: [
                           const Icon(
@@ -464,12 +480,30 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // Rules + translate button
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              // Section Rules dalam card khusus
+              Card(
+                color: Colors.green.shade50,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
+                          const Icon(Icons.rule, color: Colors.green),
+                          const SizedBox(width: 8),
                           const Text(
                             'Rules',
                             style: TextStyle(
@@ -477,16 +511,27 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
                               fontSize: 18,
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.translate,
-                              color: Colors.green,
-                            ),
+                          Spacer(),
+                          ElevatedButton.icon(
                             onPressed: translateRules,
-                            tooltip: 'Translate Rules to English',
+                            icon: const Icon(Icons.translate, size: 18),
+                            label: const Text('Translate'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(fontSize: 13),
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 10),
                       Text(
                         basecampData?['rules'] ?? '-',
                         style: const TextStyle(fontSize: 14),
@@ -513,36 +558,30 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     );
   }
 
-  Widget _infoBox({
-    required String label,
-    required String value,
+  // Chip info hiking time/elevation
+  Widget _infoChip({
     required IconData icon,
+    required String label,
+    required Color color,
+    required Color iconColor,
   }) {
     return Container(
-      width: 150,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.green.shade50,
+        color: color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade200),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.green),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                  fontSize: 14,
-                ),
-              ),
-              Text(value, style: const TextStyle(fontSize: 14)),
-            ],
+          Icon(icon, size: 18, color: iconColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: iconColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
