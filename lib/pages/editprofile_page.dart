@@ -1,45 +1,57 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
+import 'dart:convert'; // Mengimpor pustaka untuk encoding dan decoding data JSON
+import 'dart:io'; // Mengimpor pustaka untuk mengakses sistem file, seperti File
+import 'package:flutter/material.dart'; // Mengimpor pustaka Flutter untuk membuat UI
+import 'package:http/http.dart'
+    as http; // Mengimpor pustaka HTTP untuk melakukan request ke server
+import 'package:image_picker/image_picker.dart'; // Mengimpor pustaka untuk memilih gambar dari galeri atau kamera
 
+// Halaman untuk mengedit profil pengguna
 class EditProfilePage extends StatefulWidget {
-  final int id;
+  final int id; // ID pengguna yang ingin diedit
 
-  const EditProfilePage({super.key, required this.id});
+  const EditProfilePage({
+    super.key,
+    required this.id,
+  }); // Konstruktor halaman yang menerima ID pengguna
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  Map<String, dynamic>? userData;
-  File? _imageFile; // File gambar profil baru yang dipilih user
-  final ImagePicker _picker = ImagePicker(); // Objek untuk mengambil gambar
-  String? _uploadedImageUrl;
+  Map<String, dynamic>?
+  userData; // Menyimpan data pengguna yang diambil dari server
+  File? _imageFile; // Menyimpan file gambar profil baru yang dipilih pengguna
+  final ImagePicker _picker = ImagePicker(); // Objek untuk memilih gambar
+  String? _uploadedImageUrl; // URL gambar yang diunggah
 
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _passwordController;
+  late TextEditingController
+  _nameController; // Controller untuk teks input nama
+  late TextEditingController
+  _emailController; // Controller untuk teks input email
+  late TextEditingController
+  _passwordController; // Controller untuk teks input password
 
-  bool _isLoading = false;
-  String? _error;
-  bool _isFetching = true;
-  bool _passwordVisible = false;
+  bool _isLoading = false; // Menandakan apakah proses sedang berlangsung
+  String? _error; // Menyimpan pesan error jika ada
+  bool _isFetching = true; // Menandakan apakah data pengguna sedang diambil
+  bool _passwordVisible =
+      false; // Menandakan apakah password terlihat atau tidak
 
   @override
   void initState() {
     super.initState();
+    // Inisialisasi controller untuk inputan teks
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
 
-    _fetchUserData();
+    _fetchUserData(); // Ambil data pengguna saat halaman diinisialisasi
   }
 
   @override
   void dispose() {
+    // Menutup controller ketika halaman dibuang
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -48,50 +60,61 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // Method untuk memilih gambar dari galeri
   Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    ); // Memilih gambar dari galeri
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = File(
+          pickedFile.path,
+        ); // Menyimpan path gambar yang dipilih
       });
     }
   }
 
-  // Fetch data user berdasarkan ID
+  // Fetch data pengguna dari API berdasarkan ID pengguna
   Future<void> _fetchUserData() async {
     try {
       final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}',
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}', // URL API untuk mengambil data pengguna
       );
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+      ); // Mengirimkan request GET untuk mengambil data pengguna
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body); // Decode JSON response
         if (data['success'] == true && data['user'] != null) {
           if (mounted) {
             setState(() {
-              userData = data['user'];
-              _nameController.text = userData!['name'] ?? '';
-              _emailController.text = userData!['email'] ?? '';
+              userData = data['user']; // Menyimpan data pengguna ke state
+              _nameController.text =
+                  userData!['name'] ?? ''; // Menampilkan nama pengguna
+              _emailController.text =
+                  userData!['email'] ?? ''; // Menampilkan email pengguna
             });
           }
         } else {
           if (mounted) {
             setState(() {
-              _error = 'User data not found';
+              _error =
+                  'User data not found'; // Menampilkan error jika data pengguna tidak ditemukan
             });
           }
         }
       } else {
         if (mounted) {
           setState(() {
-            _error = 'Server error: ${response.statusCode}';
+            _error =
+                'Server error: ${response.statusCode}'; // Menampilkan error server jika status code tidak 200
           });
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to fetch user data: $e';
+          _error =
+              'Failed to fetch user data: $e'; // Menampilkan error jika request gagal
         });
       }
     }
@@ -99,72 +122,89 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // Method untuk mengunggah gambar ke server
   Future<void> _uploadImage(int userId) async {
-    if (_imageFile == null) return;
+    if (_imageFile == null)
+      return; // Jika tidak ada gambar yang dipilih, keluar dari fungsi
 
     final url = Uri.parse(
-      'https://finalpro-api-1013759214686.us-central1.run.app/user/$userId/upload-photo',
+      'https://finalpro-api-1013759214686.us-central1.run.app/user/$userId/upload-photo', // URL API untuk mengunggah gambar
     );
 
-    var request = http.MultipartRequest('POST', url);
+    var request = http.MultipartRequest(
+      'POST',
+      url,
+    ); // Membuat request multipart
     request.files.add(
-      await http.MultipartFile.fromPath('photo', _imageFile!.path),
+      await http.MultipartFile.fromPath(
+        'photo',
+        _imageFile!.path,
+      ), // Menambahkan file gambar ke request
     );
-    var response = await request.send();
+    var response = await request.send(); // Mengirimkan request
 
     if (response.statusCode == 200) {
       // Jika berhasil, buat timestamp untuk menghindari cache
       setState(() {
         _uploadedImageUrl =
-            'https://finalpro-api-1013759214686.us-central1.run.app${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
-        _imageFile =
-            null; // reset file lokal, supaya pakai network image terbaru
+            'https://finalpro-api-1013759214686.us-central1.run.app${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}'; // Menyimpan URL gambar yang diunggah
+        _imageFile = null; // Reset file gambar lokal setelah diunggah
       });
     } else {
-      throw Exception('Failed to upload image');
+      throw Exception(
+        'Failed to upload image',
+      ); // Menangani error jika upload gagal
     }
   }
 
   // Method untuk menyimpan data profil
   Future<void> _saveProfile() async {
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoading = true; // Menandakan bahwa data sedang disimpan
+      _error = null; // Menghapus pesan error
     });
 
     try {
       final url = Uri.parse(
-        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}',
+        'https://finalpro-api-1013759214686.us-central1.run.app/user/${widget.id}', // URL API untuk menyimpan data pengguna
       );
 
       Map<String, dynamic> bodyData = {
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
+        'name': _nameController.text.trim(), // Mengambil nama dari controller
+        'email':
+            _emailController.text.trim(), // Mengambil email dari controller
       };
 
+      // Jika password tidak kosong, tambahkan password baru ke body data
       if (_passwordController.text.trim().isNotEmpty) {
         bodyData['password'] = _passwordController.text.trim();
       }
 
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(bodyData),
+        headers: {
+          'Content-Type': 'application/json',
+        }, // Menetapkan header untuk tipe konten JSON
+        body: jsonEncode(bodyData), // Mengirimkan body data dalam format JSON
       );
 
       if (response.statusCode == 200) {
+        // Jika berhasil, unggah gambar jika ada
         if (_imageFile != null) {
           await _uploadImage(widget.id);
         }
         if (mounted) {
           setState(() {
-            _isLoading = false;
+            _isLoading = false; // Set loading false setelah proses selesai
           });
-          Navigator.pop(context, true); // Kembali dengan hasil berhasil
+          Navigator.pop(
+            context,
+            true,
+          ); // Kembali ke halaman sebelumnya dan mengirimkan hasil berhasil
         }
       } else {
         if (mounted) {
           setState(() {
-            _error = 'Server error: ${response.statusCode}';
+            _error =
+                'Server error: ${response.statusCode}'; // Menampilkan error jika status code tidak 200
             _isLoading = false;
           });
         }
@@ -172,7 +212,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Connection failed: $e';
+          _error =
+              'Connection failed: $e'; // Menampilkan error jika request gagal
           _isLoading = false;
         });
       }
@@ -200,9 +241,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         const SizedBox(height: 6),
         TextField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
+          controller: controller, // Menghubungkan dengan controller
+          obscureText: obscureText, // Menyembunyikan teks untuk password
+          keyboardType:
+              keyboardType, // Menetapkan tipe keyboard (misalnya email)
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF0F6F5),
@@ -214,7 +256,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
             ),
-            suffixIcon: suffixIcon,
+            suffixIcon: suffixIcon, // Ikon di akhir input field
           ),
           style: const TextStyle(fontSize: 16),
         ),
@@ -232,21 +274,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
     // Cek apakah URL gambar sudah ada
     if (_uploadedImageUrl != null) {
       return NetworkImage(
-        _uploadedImageUrl!,
-      ); // Jika ada gambar yang sudah diunggah
+        _uploadedImageUrl!, // Jika ada gambar yang sudah diunggah
+      );
     }
 
     // Cek apakah ada foto dari backend user
     if (userData != null && userData!['photo'] != null) {
       return NetworkImage(
         'https://finalpro-api-1013759214686.us-central1.run.app${userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
-      ); // Ambil gambar dari backend
+      ); // Mengambil gambar dari backend
     }
 
     // Fallback ke gambar profil default
     return const AssetImage(
-      'assets/images/profile.jpg',
-    ); // Gambar profil default
+      'assets/images/profile.jpg', // Gambar profil default
+    );
   }
 
   @override
@@ -256,16 +298,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F8),
       appBar: AppBar(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green, // Latar belakang hijau untuk AppBar
         centerTitle: true,
         title: const Text(
           'Edit Profile',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white), // Judul dengan teks putih
         ),
-        elevation: 0,
+        elevation: 0, // Menghilangkan bayangan pada AppBar
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context), // Tombol untuk kembali
         ),
         actions: [
           IconButton(
@@ -279,8 +321,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         strokeWidth: 2,
                       ),
                     )
-                    : const Icon(Icons.check, color: Colors.white),
-            onPressed: _isLoading ? null : _saveProfile,
+                    : const Icon(Icons.check, color: Colors.black),
+            onPressed:
+                _isLoading
+                    ? null
+                    : _saveProfile, // Menyimpan profil ketika tidak dalam keadaan loading
           ),
         ],
       ),

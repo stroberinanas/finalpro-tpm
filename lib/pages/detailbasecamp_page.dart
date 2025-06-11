@@ -1,11 +1,11 @@
-import 'dart:convert';
+import 'dart:convert'; // Untuk melakukan decoding data JSON
+import 'package:flutter/material.dart'; // Menggunakan Flutter Material Design
+import 'package:http/http.dart' as http; // Untuk melakukan HTTP request
+import 'package:url_launcher/url_launcher.dart'; // Untuk membuka URL di browser atau aplikasi lain
 
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
-
+// Halaman detail untuk basecamp
 class DetailBasecampPage extends StatefulWidget {
-  final int basecampId;
+  final int basecampId; // ID dari basecamp yang akan ditampilkan
 
   const DetailBasecampPage({super.key, required this.basecampId});
 
@@ -14,10 +14,12 @@ class DetailBasecampPage extends StatefulWidget {
 }
 
 class _DetailBasecampPageState extends State<DetailBasecampPage> {
-  Map<String, dynamic>? basecampData;
-  bool isLoading = true;
-  String? errorMessage;
+  Map<String, dynamic>?
+  basecampData; // Menyimpan data basecamp yang diambil dari API
+  bool isLoading = true; // Indikator apakah data masih loading
+  String? errorMessage; // Menyimpan pesan error jika ada masalah
 
+  // Pilihan timezone yang dapat dipilih oleh pengguna
   String selectedTimezone = 'WIB';
   final List<String> timezoneOptions = [
     'WIB',
@@ -30,6 +32,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     'New York',
   ];
 
+  // Pilihan mata uang yang dapat dipilih oleh pengguna
   String selectedCurrency = 'IDR';
   final List<String> currencyOptions = [
     'IDR',
@@ -42,6 +45,7 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     'THB',
   ];
 
+  // Kurs mata uang yang digunakan untuk konversi
   final Map<String, double> currencyRates = {
     'IDR': 1,
     'MYR': 0.00026,
@@ -53,54 +57,59 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
     'THB': 0.0020,
   };
 
-  String? translatedRules;
+  String? translatedRules; // Menyimpan hasil terjemahan peraturan basecamp
 
   @override
   void initState() {
     super.initState();
-    fetchBasecampDetail();
+    fetchBasecampDetail(); // Memanggil fungsi untuk mengambil detail basecamp
   }
 
+  // Fungsi untuk mengambil data detail basecamp dari API
   Future<void> fetchBasecampDetail() async {
     final url = Uri.parse(
-      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp/${widget.basecampId}',
+      'https://finalpro-api-1013759214686.us-central1.run.app/basecamp/${widget.basecampId}', // URL API dengan ID basecamp
     );
     try {
-      final response = await http.get(url);
+      final response = await http.get(url); // Melakukan HTTP GET request ke API
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // Jika status code 200 (OK)
+        final data = jsonDecode(response.body); // Meng-decode response body
         if (data != null) {
           setState(() {
-            basecampData = data;
-            isLoading = false;
+            basecampData = data; // Simpan data basecamp ke state
+            isLoading = false; // Selesai loading
             errorMessage = null;
           });
         } else {
           setState(() {
-            errorMessage = 'Data Not Found';
+            errorMessage = 'Data Not Found'; // Jika data tidak ditemukan
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Server error: ${response.statusCode}';
+          errorMessage =
+              'Server error: ${response.statusCode}'; // Jika status code bukan 200
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Connection Error: $e';
+        errorMessage = 'Connection Error: $e'; // Menangani error koneksi
         isLoading = false;
       });
     }
   }
 
+  // Fungsi untuk mengonversi waktu buka basecamp ke zona waktu yang dipilih
   String convertOpenTime(String openTime, String targetTimezone) {
     try {
-      final timeParts = openTime.split(':');
+      final timeParts = openTime.split(':'); // Pisahkan jam dan menit
       int hour = int.parse(timeParts[0]);
       int minute = int.parse(timeParts[1]);
 
+      // Offset zona waktu untuk beberapa zona waktu
       final Map<String, int> timezoneOffsets = {
         'WIB': 7,
         'WITA': 8,
@@ -113,82 +122,96 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
       };
 
       int offsetTarget = timezoneOffsets[targetTimezone] ?? 7;
-      int offsetWIB = 7;
+      int offsetWIB = 7; // WIB adalah zona waktu dasar
 
+      // Menghitung jam yang sudah dikonversi
       int convertedHour = hour + (offsetTarget - offsetWIB);
-      if (convertedHour < 0) convertedHour += 24;
-      if (convertedHour >= 24) convertedHour -= 24;
+      if (convertedHour < 0)
+        convertedHour += 24; // Jika jam kurang dari 0, tambah 24
+      if (convertedHour >= 24)
+        convertedHour -= 24; // Jika jam lebih dari 23, kurangi 24
 
       final hh = convertedHour.toString().padLeft(2, '0');
       final mm = minute.toString().padLeft(2, '0');
-      return '$hh:$mm';
+      return '$hh:$mm'; // Mengembalikan jam yang sudah dikonversi
     } catch (_) {
-      return openTime;
+      return openTime; // Kembalikan waktu asli jika ada kesalahan
     }
   }
 
+  // Fungsi untuk mengonversi harga ke mata uang yang dipilih
   String convertCurrency(dynamic price, String currency) {
-    if (price == null) return '-';
+    if (price == null) return '-'; // Jika harga null, kembalikan tanda minus
+
     double priceDouble;
     try {
       priceDouble =
-          price is int ? price.toDouble() : double.parse(price.toString());
+          price is int
+              ? price.toDouble()
+              : double.parse(price.toString()); // Mengonversi harga ke double
     } catch (_) {
-      return '-';
+      return '-'; // Jika gagal mengonversi harga, kembalikan tanda minus
     }
 
-    final rate = currencyRates[currency] ?? 1;
-    final converted = priceDouble * rate;
+    final rate = currencyRates[currency] ?? 1; // Ambil nilai kurs mata uang
+    final converted =
+        priceDouble * rate; // Menghitung harga yang sudah dikonversi
 
     if (currency == 'IDR') {
-      return 'IDR ${converted.toStringAsFixed(0)}';
+      return 'IDR ${converted.toStringAsFixed(0)}'; // Jika IDR, kembalikan dengan format IDR
     } else {
-      return '$currency ${converted.toStringAsFixed(2)}';
+      return '$currency ${converted.toStringAsFixed(2)}'; // Format mata uang lainnya
     }
   }
 
+  // Fungsi untuk menerjemahkan peraturan basecamp
   Future<void> translateRules() async {
     if (basecampData == null) return;
-    final text = basecampData!['rules'] ?? '';
+    final text = basecampData!['rules'] ?? ''; // Ambil teks peraturan
     if (text.isEmpty) return;
 
     setState(() {
-      translatedRules = 'Translating...';
+      translatedRules = 'Translating...'; // Tampilkan teks "Translating..."
     });
 
     try {
       final url = Uri.parse(
-        'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(text)}&langpair=id|en',
+        'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(text)}&langpair=id|en', // URL API untuk terjemahan
       );
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+      ); // Melakukan HTTP GET request untuk terjemahan
 
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
+        final json = jsonDecode(response.body); // Decode response JSON
         final translatedText =
             json['responseData']?['translatedText'] ?? 'Translation failed';
         setState(() {
-          translatedRules = translatedText;
+          translatedRules = translatedText; // Menampilkan teks terjemahan
         });
       } else {
         setState(() {
-          translatedRules = 'Translation Failed';
+          translatedRules = 'Translation Failed'; // Jika gagal terjemahkan
         });
       }
     } catch (e) {
       setState(() {
-        translatedRules = 'Translation Error: $e';
+        translatedRules =
+            'Translation Error: $e'; // Menangani error saat terjemahan
       });
     }
   }
 
+  // Fungsi untuk membuka URL maps menggunakan url_launcher
   void _launchMapsUrl(String urlMaps) async {
-    final Uri uri = Uri.parse(urlMaps);
+    final Uri uri = Uri.parse(urlMaps); // Membuat objek Uri dari URL
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      // Memeriksa apakah URL dapat diluncurkan
+      await launchUrl(uri); // Meluncurkan URL
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cannot Open Maps')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot Open Maps')),
+      ); // Menampilkan snackbar jika gagal
     }
   }
 
@@ -204,7 +227,9 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
           centerTitle: true,
           backgroundColor: Colors.green,
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ), // Menampilkan loading spinner
       );
     }
 
@@ -215,27 +240,30 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
           centerTitle: true,
           backgroundColor: Colors.green,
         ),
-        body: Center(child: Text(errorMessage!)),
+        body: Center(
+          child: Text(errorMessage!),
+        ), // Menampilkan pesan error jika ada
       );
     }
 
+    // Mengambil data basecamp
     final hikingTimeRaw = basecampData?['hiking_time'] ?? 0;
     final elevationStr =
         basecampData?['elevation']?.toString() ??
-        '-'; // convert to string safely
+        '-'; // Convert ke string dengan aman
 
-    final phone = basecampData?['phone'] ?? '-';
+    final phone = basecampData?['phone'] ?? '-'; // Mengambil nomor telepon
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          basecampData?['name'] ?? 'Detail Basecamp',
-          style: const TextStyle(color: Colors.white), // judul warna putih
+          basecampData?['name'] ??
+              'Detail Basecamp', // Menampilkan nama basecamp
+          style: const TextStyle(color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: Colors.green,
       ),
-
       body: Container(
         color: Colors.green.shade50,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -573,8 +601,8 @@ class _DetailBasecampPageState extends State<DetailBasecampPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: iconColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 18, color: iconColor), // Tampilkan ikon
+          const SizedBox(width: 6), // Spasi antara ikon dan teks
           Text(
             label,
             style: TextStyle(

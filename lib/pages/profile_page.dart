@@ -1,47 +1,59 @@
-import 'dart:convert';
-import 'package:finalpro/pages/editprofile_page.dart';
-import 'package:finalpro/pages/login_page.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
+import 'dart:convert'; // Import untuk mengubah data ke format JSON
+import 'package:finalpro/pages/editprofile_page.dart'; // Import halaman Edit Profile
+import 'package:finalpro/pages/login_page.dart'; // Import halaman Login
+import 'package:flutter/material.dart'; // Import pustaka material untuk UI
+import 'package:shared_preferences/shared_preferences.dart'; // Import untuk penyimpanan lokal (SharedPreferences)
+import 'package:http/http.dart' as http; // Import untuk melakukan HTTP request
 
+// ProfilePage untuk menampilkan halaman profil user
 class ProfilePage extends StatefulWidget {
-  final String name;
-  final String email;
+  final String name; // Nama pengguna
+  final String email; // Email pengguna
 
-  const ProfilePage({super.key, required this.name, required this.email});
+  const ProfilePage({
+    super.key,
+    required this.name,
+    required this.email,
+  }); // Konstruktor untuk menerima nama dan email
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  int? id;
-  Map<String, dynamic>? _userData;
-  bool _isLoadingData = false;
-  bool _isDetailExpanded = false;
-  String? _updatedPhotoUrl;
-  String? _error; // Deklarasi untuk _error
+  int? id; // ID pengguna yang akan diambil dari SharedPreferences
+  Map<String, dynamic>? _userData; // Menyimpan data pengguna
+  bool _isLoadingData = false; // Flag untuk memeriksa apakah data sedang dimuat
+  String? _updatedPhotoUrl; // Menyimpan URL foto pengguna yang diperbarui
+  String? _error; // Menyimpan pesan error
 
-  // State untuk wishlist
-  bool _isWishlistExpanded = false;
-  bool _isLoadingWishlist = false;
-  List<dynamic> _wishlistBasecamps = [];
+  // Wishlist State
+  bool _isWishlistExpanded = false; // Flag untuk status ekspansi wishlist
+  bool _isLoadingWishlist =
+      false; // Flag untuk memeriksa apakah wishlist sedang dimuat
+  List<dynamic> _wishlistBasecamps =
+      []; // Menyimpan daftar basecamp di wishlist
 
+  // Inisialisasi state dan load ID pengguna saat halaman dimuat
   @override
   void initState() {
     super.initState();
-    _loadId();
+    _loadId(); // Memanggil fungsi untuk mengambil ID dari SharedPreferences
   }
 
+  // Fungsi untuk mengambil ID pengguna dari SharedPreferences
   Future<void> _loadId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final loadedId = prefs.getInt('id');
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengambil instance SharedPreferences
+    final loadedId = prefs.getInt(
+      'id',
+    ); // Mendapatkan ID pengguna dari SharedPreferences
     setState(() {
-      id = loadedId;
+      id = loadedId; // Menyimpan ID ke dalam state
     });
+
     if (loadedId != null) {
-      await _fetchUserData();
+      await _fetchUserData(); // Jika ID ada, ambil data pengguna
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,64 +64,74 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
+        ); // Jika ID tidak ditemukan, arahkan ke halaman Login
       }
     }
   }
 
+  // Fungsi untuk mengambil data pengguna dari backend menggunakan HTTP GET
   Future<void> _fetchUserData() async {
-    if (id == null) return;
+    if (id == null) return; // Jika ID null, tidak perlu fetch data
 
-    setState(() => _isLoadingData = true);
+    setState(
+      () => _isLoadingData = true,
+    ); // Set loading ke true saat memulai pemuatan data
 
     try {
       final url = Uri.parse(
         'https://finalpro-api-1013759214686.us-central1.run.app/user/$id',
-      );
-      final response = await http.get(url);
+      ); // URL untuk mengambil data pengguna berdasarkan ID
+      final response = await http.get(url); // Melakukan HTTP GET request
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(
+          response.body,
+        ); // Mengonversi response JSON menjadi Map
         if (data['success'] == true) {
           setState(() {
-            _userData = data['user'];
-            _isLoadingData = false;
+            _userData = data['user']; // Menyimpan data pengguna dalam state
+            _isLoadingData =
+                false; // Set loading ke false setelah data berhasil diambil
             if (_userData?['photo'] != null) {
               _updatedPhotoUrl =
                   'https://finalpro-api-1013759214686.us-central1.run.app${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}';
             } else {
-              _updatedPhotoUrl = null;
+              _updatedPhotoUrl = null; // Jika tidak ada foto, set null
             }
           });
         } else {
           setState(() {
-            _error = data['message'] ?? 'Failed to load user data';
+            _error =
+                data['message'] ??
+                'Failed to load user data'; // Tampilkan pesan error jika ada
             _isLoadingData = false;
             _updatedPhotoUrl = null;
           });
         }
       } else {
         setState(() {
-          _error = 'Server error: ${response.statusCode}';
+          _error =
+              'Server error: ${response.statusCode}'; // Error jika server gagal memberikan response
           _isLoadingData = false;
           _updatedPhotoUrl = null;
         });
       }
     } catch (e) {
       setState(() {
-        _error = 'Connection failed: $e';
+        _error = 'Connection failed: $e'; // Tangani error koneksi
         _isLoadingData = false;
         _updatedPhotoUrl = null;
       });
     }
   }
 
+  // Fungsi untuk membuka halaman edit profile
   void _openEditProfile() {
     if (id != null) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => EditProfilePage(id: id!)),
-      );
+      ); // Jika ID ada, arahkan ke halaman edit profile
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User ID not found, please Login Again')),
@@ -117,31 +139,36 @@ class _ProfilePageState extends State<ProfilePage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
-      );
+      ); // Jika ID tidak ditemukan, arahkan ke halaman login
     }
   }
 
+  // Fungsi untuk mendapatkan gambar profil
   ImageProvider<Object> _getProfileImage() {
     if (_userData != null) {
       final photo = _userData!['photo'];
       if (photo != null && photo is String && photo.isNotEmpty) {
         return NetworkImage(
           'https://finalpro-api-1013759214686.us-central1.run.app${_userData!['photo']}?t=${DateTime.now().millisecondsSinceEpoch}',
-        );
+        ); // Jika foto tersedia, tampilkan gambar dari URL
       }
 
-      final name = _userData!['name'];
-      if (name != null && name is String && name.isNotEmpty) {
-        final encodedName = Uri.encodeComponent(name);
-        final fallbackUrl =
-            'https://ui-avatars.com/api/?name=$encodedName&background=0D8ABC&color=fff';
-        return NetworkImage(fallbackUrl);
-      }
+      // final name = _userData!['name'];
+      // if (name != null && name is String && name.isNotEmpty) {
+      //   final encodedName = Uri.encodeComponent(name);
+      //   final fallbackUrl =
+      //       'https://ui-avatars.com/api/?name=$encodedName&background=0D8ABC&color=fff';
+      //   return NetworkImage(
+      //     fallbackUrl,
+      //   ); // Jika tidak ada foto, gunakan avatar berdasarkan nama
+      // }
     }
-    return const AssetImage('assets/images/profile.jpg');
+    return const AssetImage(
+      'assets/images/profile.jpg',
+    ); // Gambar profil default jika tidak ada data
   }
 
-  // Fungsi logout dengan notifikasi
+  // Fungsi logout
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('id');
@@ -156,6 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Fungsi untuk menghapus akun
   Future<void> _deleteAccount(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -234,6 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // Fungsi untuk memuat ID wishlist dari SharedPreferences
   Future<Set<int>> _loadWishlistIds() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('id');
@@ -247,6 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
         .toSet();
   }
 
+  // Fungsi untuk mengambil daftar basecamp yang ada di wishlist
   Future<List<dynamic>> _fetchWishlistBasecamps(Set<int> wishlistIds) async {
     final url = Uri.parse(
       'https://finalpro-api-1013759214686.us-central1.run.app/basecamp',
@@ -263,6 +293,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // Fungsi untuk memuat data wishlist dan basecamp
   Future<void> _loadWishlistData() async {
     if (id == null) return;
     setState(() {
@@ -276,6 +307,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  // Fungsi untuk membuat tile dengan border
   Widget buildBorderedTile({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -295,6 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // UI untuk halaman profil
   @override
   Widget build(BuildContext context) {
     if (_isLoadingData) {

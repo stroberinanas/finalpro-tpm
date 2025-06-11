@@ -1,9 +1,11 @@
-import 'dart:math' as math;
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_compass/flutter_compass.dart';
-import 'package:location/location.dart';
+import 'dart:math'
+    as math; // Mengimpor pustaka matematika untuk menghitung sudut, rotasi, dan lainnya
+import 'dart:async'; // Mengimpor pustaka untuk menangani Stream dan Subscription
+import 'package:flutter/material.dart'; // Mengimpor Flutter untuk membuat UI
+import 'package:flutter_compass/flutter_compass.dart'; // Mengimpor pustaka untuk mendapatkan data kompas
+import 'package:location/location.dart'; // Mengimpor pustaka untuk mengakses data lokasi
 
+// Widget utama untuk halaman kompas
 class CompassPage extends StatefulWidget {
   const CompassPage({super.key});
 
@@ -12,98 +14,122 @@ class CompassPage extends StatefulWidget {
 }
 
 class _CompassPageState extends State<CompassPage> {
-  double? _heading;
-  StreamSubscription? _compassSubscription;
+  double? _heading; // Menyimpan nilai heading kompas (arah mata angin)
+  StreamSubscription? _compassSubscription; // Untuk berlangganan data kompas
 
-  final Location _location = Location();
+  final Location _location = Location(); // Instansi untuk mengakses data lokasi
 
-  double? _latitude;
-  double? _longitude;
-  double? _elevation;
+  double? _latitude; // Menyimpan latitude pengguna
+  double? _longitude; // Menyimpan longitude pengguna
+  double? _elevation; // Menyimpan elevasi (ketinggian) pengguna
 
   @override
   void initState() {
     super.initState();
     _compassSubscription = FlutterCompass.events?.listen((event) {
       setState(() {
-        _heading = event.heading;
+        _heading =
+            event.heading; // Memperbarui heading kompas saat data baru diterima
       });
     });
-    _requestLocationPermissionAndListen();
+    _requestLocationPermissionAndListen(); // Meminta izin lokasi dan mulai mendengarkan lokasi
   }
 
+  // Fungsi untuk meminta izin lokasi dan mulai mendengarkan perubahan lokasi
   void _requestLocationPermissionAndListen() async {
-    bool serviceEnabled = await _location.serviceEnabled();
+    bool serviceEnabled =
+        await _location
+            .serviceEnabled(); // Memeriksa apakah layanan lokasi aktif
     if (!serviceEnabled) {
-      serviceEnabled = await _location.requestService();
-      if (!serviceEnabled) return;
+      serviceEnabled =
+          await _location
+              .requestService(); // Meminta pengguna untuk mengaktifkan layanan lokasi
+      if (!serviceEnabled)
+        return; // Jika layanan lokasi tidak diaktifkan, keluar
     }
 
-    PermissionStatus permissionGranted = await _location.hasPermission();
+    PermissionStatus permissionGranted =
+        await _location.hasPermission(); // Memeriksa izin lokasi
     if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await _location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) return;
+      permissionGranted =
+          await _location
+              .requestPermission(); // Meminta izin lokasi jika belum diberikan
+      if (permissionGranted != PermissionStatus.granted)
+        return; // Jika izin ditolak, keluar
     }
 
+    // Mendengarkan perubahan lokasi dan memperbarui state
     _location.onLocationChanged.listen((LocationData currentLocation) {
       setState(() {
-        _latitude = currentLocation.latitude;
-        _longitude = currentLocation.longitude;
-        _elevation = currentLocation.altitude;
+        _latitude = currentLocation.latitude; // Memperbarui latitude
+        _longitude = currentLocation.longitude; // Memperbarui longitude
+        _elevation = currentLocation.altitude; // Memperbarui elevasi
       });
     });
   }
 
   @override
   void dispose() {
-    _compassSubscription?.cancel();
+    _compassSubscription
+        ?.cancel(); // Membatalkan langganan kompas saat widget dihapus
     super.dispose();
   }
 
+  // Fungsi untuk menentukan arah berdasarkan nilai heading
   String _directionLabel(double direction) {
-    if (direction >= 337.5 || direction < 22.5) return "NORTH";
-    if (direction >= 22.5 && direction < 67.5) return "NORTHEAST";
-    if (direction >= 67.5 && direction < 112.5) return "EAST";
-    if (direction >= 112.5 && direction < 157.5) return "SOUTHEAST";
-    if (direction >= 157.5 && direction < 202.5) return "SOUTH";
-    if (direction >= 202.5 && direction < 247.5) return "SOUTHWEST";
-    if (direction >= 247.5 && direction < 292.5) return "WEST";
-    if (direction >= 292.5 && direction < 337.5) return "NORTHWEST";
+    if (direction >= 337.5 || direction < 22.5) return "NORTH"; // 0-22.5°
+    if (direction >= 22.5 && direction < 67.5) return "NORTHEAST"; // 22.5-67.5°
+    if (direction >= 67.5 && direction < 112.5) return "EAST"; // 67.5-112.5°
+    if (direction >= 112.5 && direction < 157.5)
+      return "SOUTHEAST"; // 112.5-157.5°
+    if (direction >= 157.5 && direction < 202.5) return "SOUTH"; // 157.5-202.5°
+    if (direction >= 202.5 && direction < 247.5)
+      return "SOUTHWEST"; // 202.5-247.5°
+    if (direction >= 247.5 && direction < 292.5) return "WEST"; // 247.5-292.5°
+    if (direction >= 292.5 && direction < 337.5)
+      return "NORTHWEST"; // 292.5-337.5°
     return "";
   }
 
+  // Fungsi untuk memformat koordinat menjadi format derajat, menit, detik
   String _formatCoordinate(double? coord, bool isLatitude) {
-    if (coord == null) return "...";
-    final degrees = coord.abs().floor();
-    final minutes = ((coord.abs() - degrees) * 60).floor();
-    final seconds = (((coord.abs() - degrees) * 60 - minutes) * 60).floor();
+    if (coord == null) return "..."; // Jika koordinat null, kembalikan "..."
+    final degrees = coord.abs().floor(); // Derajat
+    final minutes = ((coord.abs() - degrees) * 60).floor(); // Menit
+    final seconds =
+        (((coord.abs() - degrees) * 60 - minutes) * 60).floor(); // Detik
     final direction =
-        isLatitude ? (coord >= 0 ? "N" : "S") : (coord >= 0 ? "E" : "W");
-    return "$degrees°$minutes'${seconds}\" $direction";
+        isLatitude
+            ? (coord >= 0 ? "N" : "S")
+            : (coord >= 0 ? "E" : "W"); // Arah N/S atau E/W
+    return "$degrees°$minutes'${seconds}\" $direction"; // Mengembalikan format koordinat
   }
 
   @override
   Widget build(BuildContext context) {
-    final heading = _heading ?? 0;
-    final directionLabel = _directionLabel(heading);
+    final heading = _heading ?? 0; // Jika heading null, set ke 0
+    final directionLabel = _directionLabel(heading); // Mendapatkan label arah
 
-    final latitudeStr = _formatCoordinate(_latitude, true);
-    final longitudeStr = _formatCoordinate(_longitude, false);
+    final latitudeStr = _formatCoordinate(_latitude, true); // Format latitude
+    final longitudeStr = _formatCoordinate(
+      _longitude,
+      false,
+    ); // Format longitude
     final elevationStr =
         _elevation != null
-            ? "${_elevation!.toStringAsFixed(0)} M"
-            : "Elevation Not Available";
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.green,
+            ? "${_elevation!.toStringAsFixed(0)} M" // Format elevasi jika ada
+            : "Elevation Not Available"; // Jika elevasi tidak tersedia
 
+    return Scaffold(
+      backgroundColor: Colors.white, // Latar belakang halaman
+      appBar: AppBar(
+        backgroundColor: Colors.green, // Warna latar belakang AppBar
         elevation: 0,
         title: const Text(
-          'Compass Page',
+          'Compass Page', // Judul halaman
           style: TextStyle(color: Colors.white),
         ),
-        centerTitle: true,
+        centerTitle: true, // Menyelaraskan judul di tengah
       ),
       body: SafeArea(
         child: Center(
@@ -129,8 +155,10 @@ class _CompassPageState extends State<CompassPage> {
                     ],
                   ),
                   child: CustomPaint(
-                    size: const Size(300, 300),
-                    painter: _ModernCompassPainter(heading),
+                    size: const Size(300, 300), // Ukuran kompas
+                    painter: _ModernCompassPainter(
+                      heading,
+                    ), // Menggambar kompas
                   ),
                 ),
                 const SizedBox(height: 36),
@@ -154,7 +182,7 @@ class _CompassPageState extends State<CompassPage> {
                   child: Column(
                     children: [
                       Text(
-                        directionLabel,
+                        directionLabel, // Menampilkan arah
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 18,
@@ -164,7 +192,7 @@ class _CompassPageState extends State<CompassPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "${heading.toStringAsFixed(1)}°",
+                        "${heading.toStringAsFixed(1)}°", // Menampilkan derajat heading
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 32,
@@ -194,19 +222,19 @@ class _CompassPageState extends State<CompassPage> {
                           _buildInfoRowWithIcon(
                             Icons.my_location,
                             "LATITUDE",
-                            latitudeStr,
+                            latitudeStr, // Menampilkan latitude
                           ),
                           const SizedBox(height: 10),
                           _buildInfoRowWithIcon(
                             Icons.explore,
                             "LONGITUDE",
-                            longitudeStr,
+                            longitudeStr, // Menampilkan longitude
                           ),
                           const SizedBox(height: 10),
                           _buildInfoRowWithIcon(
                             Icons.terrain,
                             "ELEVATION",
-                            elevationStr,
+                            elevationStr, // Menampilkan elevasi
                           ),
                         ],
                       ),
@@ -221,13 +249,14 @@ class _CompassPageState extends State<CompassPage> {
     );
   }
 
+  // Fungsi untuk membangun baris informasi dengan ikon
   Widget _buildInfoRowWithIcon(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: Colors.green, size: 22),
+        Icon(icon, color: Colors.green, size: 22), // Menampilkan ikon
         const SizedBox(width: 10),
         Text(
-          label,
+          label, // Label (misalnya: LATITUDE)
           style: const TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -236,7 +265,7 @@ class _CompassPageState extends State<CompassPage> {
         ),
         const Spacer(),
         Text(
-          value,
+          value, // Menampilkan nilai (misalnya: 12°34'56" N)
           style: const TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -255,36 +284,42 @@ class _ModernCompassPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width / 2, size.height / 2);
+    final center = Offset(
+      size.width / 2,
+      size.height / 2,
+    ); // Titik tengah kompas
+    final radius = math.min(size.width / 2, size.height / 2); // Radius kompas
 
-    // Main compass circle
+    // Kompas utama (lingkaran)
     final circlePaint =
         Paint()
           ..color = Colors.black
-          ..style = PaintingStyle.fill;
+          ..style = PaintingStyle.fill; // Menggambar lingkaran
     canvas.drawCircle(center, radius - 10, circlePaint);
 
-    // Ticks
+    // Menyimpan dan merotasi kanvas untuk menggambar tanda arah
     canvas.save();
     canvas.translate(center.dx, center.dy);
-    canvas.rotate(-heading * math.pi / 180);
+    canvas.rotate(-heading * math.pi / 180); // Rotasi berdasarkan heading
 
     final tickPaintSmall =
         Paint()
           ..color = Colors.grey[600]!
-          ..strokeWidth = 1.5;
+          ..strokeWidth = 1.5; // Tanda arah kecil
     final tickPaintMain =
         Paint()
           ..color = Colors.green
-          ..strokeWidth = 1.5;
+          ..strokeWidth = 1.5; // Tanda arah utama (lebih besar)
 
     for (int i = 0; i < 360; i += 6) {
-      final isMainTick = (i % 30 == 0);
-      final tickLength = isMainTick ? 20.0 : 10.0;
-      final paint = isMainTick ? tickPaintMain : tickPaintSmall;
+      final isMainTick = (i % 30 == 0); // Tanda arah utama setiap 30°
+      final tickLength = isMainTick ? 20.0 : 10.0; // Panjang tanda arah
+      final paint =
+          isMainTick
+              ? tickPaintMain
+              : tickPaintSmall; // Pilih cat berdasarkan jenis tanda arah
 
-      final angle = (i - 90) * math.pi / 180;
+      final angle = (i - 90) * math.pi / 180; // Menghitung sudut
       final start = Offset(
         (radius - tickLength - 20) * math.cos(angle),
         (radius - tickLength - 20) * math.sin(angle),
@@ -294,13 +329,13 @@ class _ModernCompassPainter extends CustomPainter {
         (radius - 20) * math.sin(angle),
       );
 
-      canvas.drawLine(start, end, paint);
+      canvas.drawLine(start, end, paint); // Menggambar garis tanda arah
 
-      // Add degree numbers for main ticks
+      // Menambahkan nomor derajat untuk tanda arah utama
       if (isMainTick) {
         final textPainter = TextPainter(
           text: TextSpan(
-            text: '$i',
+            text: '$i', // Menampilkan angka derajat
             style: TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -319,7 +354,7 @@ class _ModernCompassPainter extends CustomPainter {
       }
     }
 
-    // Direction letters
+    // Menambahkan huruf arah (N, E, S, W)
     final directions = ['N', 'E', 'S', 'W'];
     final angles = [0, 90, 180, 270];
     final directionTextStyle = TextStyle(
@@ -343,9 +378,9 @@ class _ModernCompassPainter extends CustomPainter {
       textPainter.paint(canvas, pos);
     }
 
-    canvas.restore();
+    canvas.restore(); // Mengembalikan kanvas ke posisi semula
 
-    // Needle
+    // Menggambar jarum kompas (needle)
     final needleLength = radius * 0.6;
     final needlePaint =
         Paint()
@@ -367,11 +402,12 @@ class _ModernCompassPainter extends CustomPainter {
     needlePath.lineTo(center.dx, center.dy + needleLength * 0.3);
     needlePath.lineTo(center.dx + 8, center.dy);
     needlePath.close();
-    canvas.drawPath(needlePath, needlePaint);
+    canvas.drawPath(needlePath, needlePaint); // Menggambar jarum kompas
   }
 
   @override
   bool shouldRepaint(covariant _ModernCompassPainter oldDelegate) {
-    return oldDelegate.heading != heading;
+    return oldDelegate.heading !=
+        heading; // Menggambar ulang jika heading berubah
   }
 }

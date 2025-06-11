@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart'; // Mengimpor paket Flutter untuk UI
+import 'package:shared_preferences/shared_preferences.dart'; // Mengimpor paket untuk menyimpan data secara lokal
 
+// Widget utama halaman NecessaryPage
 class NecessaryPage extends StatefulWidget {
   const NecessaryPage({super.key});
 
@@ -10,8 +11,8 @@ class NecessaryPage extends StatefulWidget {
 
 class _NecessaryPageState extends State<NecessaryPage> {
   // Daftar item perlengkapan dan status checked
-  // Daftar item perlengkapan dan status checked
-  Map<String, bool> items = {};
+  Map<String, bool> items =
+      {}; // Menyimpan item perlengkapan dengan status centang
 
   @override
   void initState() {
@@ -19,72 +20,132 @@ class _NecessaryPageState extends State<NecessaryPage> {
     _loadPreferences(); // Muat status checkbox dari SharedPreferences
   }
 
-  // Muat status centang dari SharedPreferences
+  // Muat status centang dari SharedPreferences berdasarkan ID pengguna
   Future<void> _loadPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // Menyusun daftar item dari SharedPreferences
-      items = {
-        'Carrier': prefs.getBool('Carrier') ?? false,
-        'Trekking Shoes and Hiking Sandals':
-            prefs.getBool('Trekking Shoes and Hiking Sandals') ?? false,
-        'Socks': prefs.getBool('Socks') ?? false,
-        'Pants and Appropriate Clothing':
-            prefs.getBool('Pants and Appropriate Clothing') ?? false,
-        'Duck Down/Waterproof Jacket':
-            prefs.getBool('Duck Down/Waterproof Jacket') ?? false,
-        'Hat and Gloves': prefs.getBool('Hat and Gloves') ?? false,
-        'Headlamp/Flashlight': prefs.getBool('Headlamp/Flashlight') ?? false,
-        'Sleeping Bag': prefs.getBool('Sleeping Bag') ?? false,
-        'TNI/Aluminum Foil Mat':
-            prefs.getBool('TNI/Aluminum Foil Mat') ?? false,
-        'Personal Medications': prefs.getBool('Personal Medications') ?? false,
-        'Shower and Prayer Equipment':
-            prefs.getBool('Shower and Prayer Equipment') ?? false,
-        'Gaiters': prefs.getBool('Gaiters') ?? false,
-        'Raincoat/Rain Jacket': prefs.getBool('Raincoat/Rain Jacket') ?? false,
-        'Tissues': prefs.getBool('Tissues') ?? false,
-        'Spare Batteries': prefs.getBool('Spare Batteries') ?? false,
-        'Trashbag': prefs.getBool('Trashbag') ?? false,
-        'Trekking Poles': prefs.getBool('Trekking Poles') ?? false,
-        'Snacks and Water': prefs.getBool('Snacks and Water') ?? false,
-        'Mask/Face Buff': prefs.getBool('Mask/Face Buff') ?? false,
-        'ID Card Copy': prefs.getBool('ID Card Copy') ?? false,
-        'Health Certificate': prefs.getBool('Health Certificate') ?? false,
-        'Tent': prefs.getBool('Tent') ?? false,
-        'Cooking Equipment': prefs.getBool('Cooking Equipment') ?? false,
-      };
-    });
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengakses SharedPreferences
+    final idUser = prefs.getInt(
+      'id',
+    ); // Mengambil ID pengguna dari SharedPreferences
+
+    if (idUser != null) {
+      final key =
+          'checklist_$idUser'; // Membuat key dinamis untuk menyimpan data berdasarkan ID pengguna
+
+      // Daftar nama item perlengkapan
+      List<String> itemNames = [
+        'Carrier',
+        'Trekking Shoes and Hiking Sandals',
+        'Socks',
+        'Pants and Appropriate Clothing',
+        'Duck Down/Waterproof Jacket',
+        'Hat and Gloves',
+        'Headlamp/Flashlight',
+        'Sleeping Bag',
+        'TNI/Aluminum Foil Mat',
+        'Personal Medications',
+        'Shower and Prayer Equipment',
+        'Gaiters',
+        'Raincoat/Rain Jacket',
+        'Tissues',
+        'Spare Batteries',
+        'Trashbag',
+        'Trekking Poles',
+        'Snacks and Water',
+        'Mask/Face Buff',
+        'ID Card Copy',
+        'Health Certificate',
+        'Tent',
+        'Cooking Equipment',
+      ];
+
+      // Memuat status checkbox (checked/unchecked) ke dalam map
+      setState(() {
+        items = Map.fromIterable(
+          itemNames, // Menggunakan daftar nama item
+          key: (item) => item,
+          value:
+              (item) =>
+                  prefs.getBool('$key-$item') ??
+                  false, // Mengambil status centang untuk setiap item
+        );
+      });
+    }
   }
 
   // Simpan status centang ke SharedPreferences
   Future<void> _savePreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    for (String key in items.keys) {
-      await prefs.setBool(key, items[key]!);
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengakses SharedPreferences
+    final idUser = prefs.getInt(
+      'id',
+    ); // Mengambil ID pengguna dari SharedPreferences
+
+    if (idUser != null) {
+      final key =
+          'checklist_$idUser'; // Membuat key dinamis untuk menyimpan data berdasarkan ID pengguna
+
+      // Menyimpan status centang untuk setiap item
+      for (String keyItem in items.keys) {
+        await prefs.setBool(
+          '$key-$keyItem',
+          items[keyItem]!,
+        ); // Menyimpan status centang item
+      }
     }
   }
 
+  // Reset checklist untuk pengguna saat ini dengan menghapus preferensi
+  Future<void> _resetPreferences() async {
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengakses SharedPreferences
+    final idUser = prefs.getInt(
+      'id',
+    ); // Mengambil ID pengguna dari SharedPreferences
+
+    if (idUser != null) {
+      final key =
+          'checklist_$idUser'; // Membuat key dinamis untuk menyimpan data berdasarkan ID pengguna
+
+      // Menghapus preferensi item secara individual dari SharedPreferences
+      for (String keyItem in items.keys) {
+        await prefs.remove(
+          '$key-$keyItem',
+        ); // Menghapus status centang untuk item
+      }
+
+      setState(() {
+        // Reset items ke 'false' (belum dicentang) di UI
+        items.updateAll(
+          (key, value) => false,
+        ); // Set semua item sebagai unchecked
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.green, // Green background for AppBar
+        backgroundColor: Colors.green, // Latar belakang AppBar berwarna hijau
         title: const Text(
           'Necessary Gear Checklist',
-          style: TextStyle(color: Colors.white), // White text for title
+          style: TextStyle(color: Colors.white), // Teks judul berwarna putih
         ),
-        centerTitle: true,
+        centerTitle: true, // Judul berada di tengah
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back), // Back button
+          icon: const Icon(Icons.arrow_back), // Tombol kembali
           onPressed: () {
             _savePreferences(); // Simpan status sebelum kembali
-            Navigator.pop(context); // Navigate back to the previous page
+            Navigator.pop(context); // Navigasi kembali ke halaman sebelumnya
           },
         ),
       ),
       body: Container(
-        color: Colors.white, // White background for the body
-        padding: const EdgeInsets.all(16.0),
+        color: Colors.white, // Latar belakang body berwarna putih
+        padding: const EdgeInsets.all(
+          16.0,
+        ), // Padding untuk konten di dalam body
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -129,16 +190,26 @@ class _NecessaryPageState extends State<NecessaryPage> {
               child: ListView(
                 children:
                     items.keys.map((String key) {
-                      final checked = items[key] ?? false;
+                      final checked =
+                          items[key] ?? false; // Status centang untuk item
                       return Card(
-                        elevation: checked ? 5 : 2,
+                        elevation:
+                            checked
+                                ? 5
+                                : 2, // Elevasi kartu lebih tinggi jika dicentang
                         color:
                             checked
                                 ? Colors.green.shade100
-                                : Colors.green.shade50,
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                : Colors
+                                    .green
+                                    .shade50, // Warna kartu sesuai dengan status centang
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                        ), // Margin kartu
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(
+                            14,
+                          ), // Sudut kartu melengkung
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(
@@ -146,29 +217,30 @@ class _NecessaryPageState extends State<NecessaryPage> {
                             horizontal: 10,
                           ),
                           leading: Checkbox(
-                            value: checked,
+                            value: checked, // Status checkbox
                             onChanged: (bool? value) {
                               setState(() {
-                                items[key] = value!;
+                                items[key] = value!; // Update status checkbox
                               });
-                              _savePreferences();
+                              _savePreferences(); // Simpan perubahan ke SharedPreferences
                             },
                             activeColor:
-                                Colors.green, // Green color for checked box
+                                Colors.green, // Warna checkbox saat dicentang
                           ),
                           title: Row(
                             children: [
                               Icon(
                                 checked
                                     ? Icons.check_circle
-                                    : Icons.circle_outlined,
+                                    : Icons
+                                        .circle_outlined, // Ganti ikon sesuai status
                                 color: checked ? Colors.green : Colors.grey,
                                 size: 20,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  key,
+                                  key, // Nama item perlengkapan
                                   style: TextStyle(
                                     color:
                                         checked
@@ -182,7 +254,7 @@ class _NecessaryPageState extends State<NecessaryPage> {
                                     decoration:
                                         checked
                                             ? TextDecoration.lineThrough
-                                            : null,
+                                            : null, // Garis tengah jika dicentang
                                   ),
                                 ),
                               ),
@@ -196,19 +268,15 @@ class _NecessaryPageState extends State<NecessaryPage> {
             const SizedBox(height: 10),
             Center(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    items.updateAll((key, value) => false);
-                  });
-                  _savePreferences();
-                },
-                icon: const Icon(Icons.refresh),
+                onPressed:
+                    _resetPreferences, // Reset checklist saat tombol ditekan
+                icon: const Icon(Icons.refresh), // Ikon refresh
                 label: const Text('Reset Checklist'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.green, // Latar belakang tombol hijau
+                  foregroundColor: Colors.white, // Teks tombol putih
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(18), // Sudut melengkung
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -216,7 +284,7 @@ class _NecessaryPageState extends State<NecessaryPage> {
                   ),
                   textStyle: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.bold, // Teks tebal
                   ),
                 ),
               ),

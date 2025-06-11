@@ -1,10 +1,10 @@
-import 'dart:convert';
-import 'package:finalpro/notification_service.dart';
-import 'package:finalpro/pages/detailbasecamp_page.dart';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert'; // Untuk decoding data JSON
+import 'package:finalpro/notification_service.dart'; // Untuk notifikasi
+import 'package:finalpro/pages/detailbasecamp_page.dart'; // Untuk halaman detail basecamp
+import 'package:flutter/material.dart'; // Menggunakan Flutter Material Design
+import 'package:http/http.dart' as http; // Untuk melakukan HTTP request
+import 'package:permission_handler/permission_handler.dart'; // Untuk menangani izin akses
+import 'package:shared_preferences/shared_preferences.dart'; // Untuk menyimpan data lokal menggunakan SharedPreferences
 
 // Widget utama halaman BasecampPage
 class BasecampPage extends StatefulWidget {
@@ -34,13 +34,19 @@ class _BasecampPageState extends State<BasecampPage> {
 
   // Load wishlist dari SharedPreferences sesuai id user
   Future<void> loadWishlist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final idUser = prefs.getInt('id');
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengakses SharedPreferences
+    final idUser = prefs.getInt(
+      'id',
+    ); // Mengambil id user dari SharedPreferences
     if (idUser != null) {
-      final key = 'wishlist_$idUser';
-      final List<String>? savedList = prefs.getStringList(key);
+      final key = 'wishlist_$idUser'; // Membuat key berdasarkan id user
+      final List<String>? savedList = prefs.getStringList(
+        key,
+      ); // Mengambil data wishlist
       if (savedList != null) {
         setState(() {
+          // Mengkonversi List<String> ke Set<int> dan menghapus nilai 0
           _wishlistIds =
               savedList
                   .map((e) => int.tryParse(e) ?? 0) // konversi ke int
@@ -53,10 +59,12 @@ class _BasecampPageState extends State<BasecampPage> {
 
   // Simpan wishlist ke SharedPreferences
   Future<void> saveWishlist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final idUser = prefs.getInt('id');
+    final prefs =
+        await SharedPreferences.getInstance(); // Mengakses SharedPreferences
+    final idUser = prefs.getInt('id'); // Mengambil id user
     if (idUser != null) {
-      final key = 'wishlist_$idUser';
+      final key = 'wishlist_$idUser'; // Membuat key berdasarkan id user
+      // Menyimpan Set<int> sebagai list string di SharedPreferences
       await prefs.setStringList(
         key,
         _wishlistIds.map((e) => e.toString()).toList(),
@@ -67,33 +75,38 @@ class _BasecampPageState extends State<BasecampPage> {
   // Ambil daftar basecamp dari API
   Future<void> fetchBasecampList() async {
     final url =
-        "https://finalpro-api-1013759214686.us-central1.run.app/basecamp";
+        "https://finalpro-api-1013759214686.us-central1.run.app/basecamp"; // URL API
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+      ); // Request HTTP GET ke API
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // Jika status code 200 (OK)
+        final data = jsonDecode(response.body); // Parsing response JSON
         if (data is List) {
           setState(() {
-            _basecampList = data; // simpan data ke state
-            _isLoading = false; // selesai loading
+            _basecampList = data; // Simpan data basecamp ke state
+            _isLoading = false; // Selesai memuat data
             _errorMessage = null;
           });
         } else {
           setState(() {
-            _errorMessage = 'Invalid data format from server';
+            _errorMessage =
+                'Invalid data format from server'; // Format data tidak valid
             _isLoading = false;
           });
         }
       } else {
         setState(() {
           _errorMessage =
-              "Failed to load basecamp, status code: ${response.statusCode}";
+              "Failed to load basecamp, status code: ${response.statusCode}"; // Jika gagal mengambil data
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = "Error fetching basecamp: $e";
+        _errorMessage =
+            "Error fetching basecamp: $e"; // Menangani error jika ada masalah saat fetch data
         _isLoading = false;
       });
     }
@@ -103,18 +116,18 @@ class _BasecampPageState extends State<BasecampPage> {
   void toggleWishlist(int basecampId) {
     setState(() {
       if (_wishlistIds.contains(basecampId)) {
-        _wishlistIds.remove(basecampId);
+        _wishlistIds.remove(basecampId); // Hapus dari wishlist jika sudah ada
       } else {
-        _wishlistIds.add(basecampId);
+        _wishlistIds.add(basecampId); // Tambah ke wishlist jika belum ada
       }
     });
-    saveWishlist();
+    saveWishlist(); // Simpan perubahan ke SharedPreferences
   }
 
   // Toggle urutan sorting (asc/desc)
   void _toggleSortOrder() {
     setState(() {
-      _sortByHikingTimeAsc = !_sortByHikingTimeAsc;
+      _sortByHikingTimeAsc = !_sortByHikingTimeAsc; // Mengubah urutan sorting
     });
   }
 
@@ -138,18 +151,22 @@ class _BasecampPageState extends State<BasecampPage> {
         ),
         centerTitle: true, // Mengatur judul agar berada di tengah
       ),
-
+      // Jika sedang loading tampilkan CircularProgressIndicator, jika tidak tampilkan konten
       body:
           _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : content(),
+              ? const Center(
+                child: CircularProgressIndicator(),
+              ) // Loading spinner
+              : content(), // Menampilkan konten utama jika tidak loading
     );
   }
 
   // Konten halaman BasecampPage
   Widget content() {
     if (_errorMessage != null) {
-      return Center(child: Text(_errorMessage!));
+      return Center(
+        child: Text(_errorMessage!),
+      ); // Tampilkan pesan error jika ada
     }
 
     // Filter basecamp berdasarkan pencarian dan provinsi
@@ -175,8 +192,8 @@ class _BasecampPageState extends State<BasecampPage> {
       final hikingA = a['hiking_time'] ?? 0;
       final hikingB = b['hiking_time'] ?? 0;
       return _sortByHikingTimeAsc
-          ? hikingA.compareTo(hikingB)
-          : hikingB.compareTo(hikingA);
+          ? hikingA.compareTo(hikingB) // Ascending
+          : hikingB.compareTo(hikingA); // Descending
     });
 
     return Padding(
@@ -205,13 +222,17 @@ class _BasecampPageState extends State<BasecampPage> {
                   decoration: const InputDecoration(
                     isCollapsed: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    hintText: "ex : Candi Cetho",
+                    hintText: "ex : Candi Cetho", // Placeholder text
                     hintStyle: TextStyle(
                       color: Color.fromARGB(255, 255, 255, 255),
                       fontSize: 14,
                     ),
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search, color: Colors.white, size: 18),
+                    border: InputBorder.none, // Tanpa border
+                    icon: Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 18,
+                    ), // Icon pencarian
                   ),
                 ),
               ),
@@ -258,7 +279,8 @@ class _BasecampPageState extends State<BasecampPage> {
                     onChanged: (newValue) {
                       if (newValue != null) {
                         setState(() {
-                          _selectedProvince = newValue;
+                          _selectedProvince =
+                              newValue; // Ubah provinsi yang dipilih
                         });
                       }
                     },
@@ -271,7 +293,7 @@ class _BasecampPageState extends State<BasecampPage> {
                 icon: Icon(
                   _sortByHikingTimeAsc
                       ? Icons.arrow_upward
-                      : Icons.arrow_downward,
+                      : Icons.arrow_downward, // Ubah ikon berdasarkan urutan
                   size: 18,
                 ),
                 label: const Text('Sort by Hiking Time'),
@@ -399,16 +421,18 @@ class _BasecampPageState extends State<BasecampPage> {
                                           ),
                                           GestureDetector(
                                             onTap: () async {
-                                              toggleWishlist(basecampId);
+                                              toggleWishlist(
+                                                basecampId,
+                                              ); // Toggle wishlist
                                               String body =
                                                   _wishlistIds.contains(
                                                         basecampId,
                                                       )
                                                       ? "Bookmark Saved"
-                                                      : "Bookmark Removed";
+                                                      : "Bookmark Removed"; // Menentukan pesan berdasarkan status bookmark
                                               String title = basecamp['name'];
                                               await Permission.notification
-                                                  .request();
+                                                  .request(); // Meminta izin notifikasi
                                               await NotificationService().show(
                                                 title,
                                                 body,
@@ -503,8 +527,8 @@ class _BasecampPageState extends State<BasecampPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: iconColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 18, color: iconColor), // Tampilkan ikon
+          const SizedBox(width: 6), // Spasi antara ikon dan teks
           Text(
             label,
             style: TextStyle(
